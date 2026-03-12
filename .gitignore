@@ -62,7 +62,3 @@ bb0da4fb-*/
 # Memory (optional - commit updates periodically)
 # memory/
 
-# Submodules (each has its own git)
-app/
-companyos/
-config/
