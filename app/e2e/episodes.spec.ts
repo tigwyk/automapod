@@ -1,10 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { getTestCredentials } from './test-utils';
 
 test.describe('Episode List', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="email"]', process.env.TEST_USER_EMAIL || 'test@example.com');
-    await page.fill('input[type="password"]', process.env.TEST_USER_PASSWORD || 'testpassword123');
+
+    // Get test credentials (fails fast if missing)
+    const { email, password } = getTestCredentials();
+
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', password);
     await page.click('button[type="submit"]');
     await page.waitForURL('/dashboard', { timeout: 10000 });
   });
@@ -28,8 +33,12 @@ test.describe('Episode List', () => {
 test.describe('Episode Detail', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="email"]', process.env.TEST_USER_EMAIL || 'test@example.com');
-    await page.fill('input[type="password"]', process.env.TEST_USER_PASSWORD || 'testpassword123');
+
+    // Get test credentials (fails fast if missing)
+    const { email, password } = getTestCredentials();
+
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', password);
     await page.click('button[type="submit"]');
     await page.waitForURL('/dashboard', { timeout: 10000 });
   });
@@ -58,8 +67,12 @@ test.describe('Episode Detail', () => {
 test.describe('Episode Deletion', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="email"]', process.env.TEST_USER_EMAIL || 'test@example.com');
-    await page.fill('input[type="password"]', process.env.TEST_USER_PASSWORD || 'testpassword123');
+
+    // Get test credentials (fails fast if missing)
+    const { email, password } = getTestCredentials();
+
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', password);
     await page.click('button[type="submit"]');
     await page.waitForURL('/dashboard', { timeout: 10000 });
   });
@@ -86,8 +99,12 @@ test.describe('Episode Deletion', () => {
 test.describe('Dashboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="email"]', process.env.TEST_USER_EMAIL || 'test@example.com');
-    await page.fill('input[type="password"]', process.env.TEST_USER_PASSWORD || 'testpassword123');
+
+    // Get test credentials (fails fast if missing)
+    const { email, password } = getTestCredentials();
+
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', password);
     await page.click('button[type="submit"]');
     await page.waitForURL('/dashboard', { timeout: 10000 });
   });
