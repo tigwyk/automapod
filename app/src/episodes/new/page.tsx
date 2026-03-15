@@ -4,6 +4,33 @@ import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
+async function getPodcasts() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+      },
+    }
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect('/login');
+  }
+
+  const { data: podcasts } = await supabase
+    .from('podcasts')
+    .select('*')
+    .order('title');
+
+  return { podcasts: podcasts || [] };
+}
+
 async function uploadEpisode(formData: FormData) {
   'use server';
 
@@ -28,6 +55,7 @@ async function uploadEpisode(formData: FormData) {
   const file = formData.get('audio') as File;
   const title = formData.get('title') as string;
   const description = formData.get('description') as string || '';
+  const podcastId = formData.get('podcast_id') as string;
 
   if (!title) {
     throw new Error('Title is required');
@@ -46,6 +74,7 @@ async function uploadEpisode(formData: FormData) {
       audio_url: `temp://${file.name}`,
       duration_seconds: null,
       transcript_status: 'pending',
+      podcast_id: podcastId || null,
     })
     .select()
     .single();
@@ -57,7 +86,9 @@ async function uploadEpisode(formData: FormData) {
   redirect('/episodes');
 }
 
-export default function NewEpisodePage() {
+export default async function NewEpisodePage() {
+  const { podcasts } = await getPodcasts();
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="mb-8">
@@ -67,6 +98,29 @@ export default function NewEpisodePage() {
 
       <div className="bg-white shadow rounded-lg p-6">
         <form action={uploadEpisode} className="space-y-6">
+          {podcasts.length > 0 && (
+            <div>
+              <label htmlFor="podcast_id" className="block text-sm font-medium text-gray-700">
+                Podcast (optional)
+              </label>
+              <select
+                name="podcast_id"
+                id="podcast_id"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="">Select a podcast...</option>
+                {podcasts.map((podcast: any) => (
+                  <option key={podcast.id} value={podcast.id}>
+                    {podcast.title}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                Leave empty to upload as a standalone episode
+              </p>
+            </div>
+          )}
+
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">
               Title <span className="text-red-500">*</span>
