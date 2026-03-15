@@ -1,9 +1,0 @@
-[submodule "app"]
-	path = app
-	url = ./app
-[submodule "companyos"]
-	path = companyos
-	url = ./companyos
-[submodule "config"]
-	path = config
-	url = ./config
