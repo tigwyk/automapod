@@ -1,23 +1,11 @@
 import { redirect } from 'next/navigation';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { uploadToR2, generateEpisodeKey, R2_EPISODES_BUCKET } from '@/lib/r2';
+import { createClient } from '@/lib/supabase/server';
+import { uploadToR2, isValidAudioFile, isValidFileSize } from '@/lib/r2';
 
 export const dynamic = 'force-dynamic';
 
 async function getPodcasts() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
+  const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -35,18 +23,7 @@ async function getPodcasts() {
 async function uploadEpisode(formData: FormData) {
   'use server';
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
+  const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -66,23 +43,15 @@ async function uploadEpisode(formData: FormData) {
     throw new Error('Audio file is required');
   }
 
-  // Get podcast info for RSS slug (if podcast selected)
-  let rssSlug = 'standalone';
-  if (podcastId) {
-    const { data: podcast } = await supabase
-      .from('podcasts')
-      .select('rss_slug')
-      .eq('id', podcastId)
-      .single();
-
-    if (podcast) {
-      rssSlug = podcast.rss_slug;
-    }
+  // Validate file type
+  if (!isValidAudioFile(file)) {
+    throw new Error('Invalid file type. Please upload an audio file (MP3, M4A, WAV, or OGG)');
   }
 
-  // Convert file to buffer
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+  // Validate file size (500MB max)
+  if (!isValidFileSize(file)) {
+    throw new Error('File size exceeds 500MB limit');
+  }
 
   // Create episode record first to get ID
   const { data: episode, error: insertError } = await supabase
@@ -103,13 +72,7 @@ async function uploadEpisode(formData: FormData) {
   }
 
   // Upload to R2
-  const key = generateEpisodeKey(rssSlug, episode.id, file.name);
-  const audioUrl = await uploadToR2(
-    R2_EPISODES_BUCKET,
-    key,
-    buffer,
-    file.type || 'audio/mpeg'
-  );
+  const audioUrl = await uploadToR2(file, episode.id, file.name);
 
   // Update episode with R2 URL
   const { error: updateError } = await supabase
