@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { getTestCredentials } from './test-utils';
 
 // Helper to generate unique test data
 const generateTestData = () => {
@@ -16,9 +17,12 @@ test.describe('Podcast Management', () => {
     // Navigate to login page
     await page.goto('/login');
 
+    // Get test credentials (fails fast if missing)
+    const { email, password } = getTestCredentials();
+
     // Fill in login form with test credentials
-    await page.fill('input[type="email"]', process.env.TEST_USER_EMAIL || 'test@example.com');
-    await page.fill('input[type="password"]', process.env.TEST_USER_PASSWORD || 'testpassword123');
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', password);
 
     // Submit login form
     await page.click('button[type="submit"]');

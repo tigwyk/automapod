@@ -1,10 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { getTestCredentials } from './test-utils';
 
 test.describe('Episode Upload', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="email"]', process.env.TEST_USER_EMAIL || 'test@example.com');
-    await page.fill('input[type="password"]', process.env.TEST_USER_PASSWORD || 'testpassword123');
+
+    // Get test credentials (fails fast if missing)
+    const { email, password } = getTestCredentials();
+
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', password);
     await page.click('button[type="submit"]');
     await page.waitForURL('/dashboard', { timeout: 10000 });
   });
@@ -140,7 +145,8 @@ test.describe('Episode Upload', () => {
 
     // Check for form labels
     await expect(page.locator('label:has-text("Title")')).toBeVisible();
-    await expect(page.locator('label:has-text("Description")')).or(page.locator('label:has-text("Summary")')).isVisible();
-    await expect(page.locator('label:has-text("Audio")').or(page.locator('label:has-text("File")')).isVisible();
+    await expect(page.locator('label:has-text("Description")')).or(page.locator('label:has-text("Summary")')).toBeVisible();
+    const audioOrFileLabel = page.locator('label:has-text("Audio"), label:has-text("File")');
+    await expect(audioOrFileLabel).toBeVisible();
   });
 });
