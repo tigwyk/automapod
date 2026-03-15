@@ -38,6 +38,12 @@ Thumbs.db
 coverage/
 .nyc_output/
 *.test.ts.snap
+playwright-report/
+test-results/
+*.spec.ts.snap
+
+# Claude AI
+.claude/
 
 # IDE
 .vscode/
