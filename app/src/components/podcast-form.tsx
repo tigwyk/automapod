@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useFormState } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 
 interface Podcast {
   id: string;
@@ -13,14 +13,28 @@ interface Podcast {
 
 interface PodcastFormProps {
   podcast?: Podcast;
+  podcastId?: string;
   action: (formData: FormData) => Promise<void>;
 }
 
-export function PodcastForm({ podcast, action }: PodcastFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+function SubmitButton({ podcast }: { podcast?: Podcast }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {pending ? 'Saving...' : podcast ? 'Update Podcast' : 'Create Podcast'}
+    </button>
+  );
+}
+
+export function PodcastForm({ podcast, podcastId, action }: PodcastFormProps) {
   const [title, setTitle] = useState(podcast?.title || '');
   const [rssSlug, setRssSlug] = useState(podcast?.rss_slug || '');
-  const { pending, data } = useFormState(action);
+  const [state, formAction] = useFormState(action, null);
 
   // Auto-generate RSS slug from title
   useEffect(() => {
@@ -38,7 +52,7 @@ export function PodcastForm({ podcast, action }: PodcastFormProps) {
   }, [title, podcast]);
 
   // Get error from form state
-  const errorMessage = data?.error;
+  const errorMessage = state?.error;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -68,7 +82,12 @@ export function PodcastForm({ podcast, action }: PodcastFormProps) {
       )}
 
       <div className="bg-white shadow rounded-lg p-6">
-        <form action={handleSubmit} className="space-y-6">
+        <form action={formAction} className="space-y-6">
+          {/* Hidden ID field for edits */}
+          {podcastId && (
+            <input type="hidden" name="id" value={podcastId} />
+          )}
+
           {/* Title */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">
@@ -152,13 +171,7 @@ export function PodcastForm({ podcast, action }: PodcastFormProps) {
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={pending || isSubmitting}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {pending || isSubmitting ? 'Saving...' : podcast ? 'Update Podcast' : 'Create Podcast'}
-            </button>
+            <SubmitButton podcast={podcast} />
           </div>
         </form>
       </div>
