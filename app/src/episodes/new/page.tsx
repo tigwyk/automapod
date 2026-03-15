@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { uploadToR2, generateEpisodeKey, R2_EPISODES_BUCKET } from '@/lib/r2';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,13 +66,31 @@ async function uploadEpisode(formData: FormData) {
     throw new Error('Audio file is required');
   }
 
-  // For now, just create a record without actual upload
-  const { data: episode, error } = await supabase
+  // Get podcast info for RSS slug (if podcast selected)
+  let rssSlug = 'standalone';
+  if (podcastId) {
+    const { data: podcast } = await supabase
+      .from('podcasts')
+      .select('rss_slug')
+      .eq('id', podcastId)
+      .single();
+
+    if (podcast) {
+      rssSlug = podcast.rss_slug;
+    }
+  }
+
+  // Convert file to buffer
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  // Create episode record first to get ID
+  const { data: episode, error: insertError } = await supabase
     .from('episodes')
     .insert({
       title,
       description,
-      audio_url: `temp://${file.name}`,
+      audio_url: null, // Will update after upload
       duration_seconds: null,
       transcript_status: 'pending',
       podcast_id: podcastId || null,
@@ -79,8 +98,27 @@ async function uploadEpisode(formData: FormData) {
     .select()
     .single();
 
-  if (error) {
-    throw new Error(error.message);
+  if (insertError || !episode) {
+    throw new Error(insertError?.message || 'Failed to create episode');
+  }
+
+  // Upload to R2
+  const key = generateEpisodeKey(rssSlug, episode.id, file.name);
+  const audioUrl = await uploadToR2(
+    R2_EPISODES_BUCKET,
+    key,
+    buffer,
+    file.type || 'audio/mpeg'
+  );
+
+  // Update episode with R2 URL
+  const { error: updateError } = await supabase
+    .from('episodes')
+    .update({ audio_url: audioUrl })
+    .eq('id', episode.id);
+
+  if (updateError) {
+    throw new Error(updateError.message);
   }
 
   redirect('/episodes');
