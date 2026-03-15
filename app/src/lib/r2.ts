@@ -18,11 +18,11 @@ const getRequiredEnv = (name: string): string => {
 
 // R2 Configuration
 export const R2_CONFIG = {
-  accountId: getRequiredEnv('CLOUDFLARE_ACCOUNT_ID'),
-  accessKeyId: getRequiredEnv('CLOUDFLARE_R2_ACCESS_KEY_ID'),
-  secretAccessKey: getRequiredEnv('CLOUDFLARE_R2_SECRET_ACCESS_KEY'),
-  bucketName: getRequiredEnv('CLOUDFLARE_R2_BUCKET_NAME'),
-  publicUrl: getRequiredEnv('CLOUDFLARE_R2_PUBLIC_URL'),
+  accountId: getRequiredEnv('R2_ACCOUNT_ID'),
+  accessKeyId: getRequiredEnv('R2_ACCESS_KEY_ID'),
+  secretAccessKey: getRequiredEnv('R2_SECRET_ACCESS_KEY'),
+  bucketName: getRequiredEnv('R2_EPISODES_BUCKET'),
+  publicUrl: getRequiredEnv('R2_EPISODES_CUSTOM_DOMAIN'),
 } as const;
 
 // R2 Client (singleton)
