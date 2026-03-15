@@ -145,7 +145,7 @@ test.describe('Episode Upload', () => {
 
     // Check for form labels
     await expect(page.locator('label:has-text("Title")')).toBeVisible();
-    await expect(page.locator('label:has-text("Description")')).or(page.locator('label:has-text("Summary")')).toBeVisible();
+    await expect(page.locator('label:has-text("Description")')).toBeVisible();
     const audioOrFileLabel = page.locator('label:has-text("Audio"), label:has-text("File")');
     await expect(audioOrFileLabel).toBeVisible();
   });

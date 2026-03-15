@@ -29,17 +29,17 @@ test.describe('Dashboard', () => {
   });
 
   test('should have navigation buttons', async ({ page }) => {
-    // Check for Create Podcast button
-    await expect(page.locator('text=Create Podcast')).toBeVisible();
+    // Check for Create Podcast button (use role to avoid strict mode violation)
+    await expect(page.getByRole('link', { name: 'Create Podcast' })).toBeVisible();
 
     // Check for Manage Podcasts button
-    await expect(page.locator('text=Manage Podcasts')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Manage Podcasts' })).toBeVisible();
 
     // Check for Upload New Episode button
-    await expect(page.locator('text=Upload New Episode')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Upload New Episode' })).toBeVisible();
 
     // Check for View All Episodes button
-    await expect(page.locator('text=View All Episodes')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'View All Episodes' })).toBeVisible();
   });
 
   test('should display feature checklist', async ({ page }) => {
