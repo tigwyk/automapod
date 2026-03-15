@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useFormState } from 'react-dom';
 
 interface Podcast {
   id: string;
@@ -19,6 +20,7 @@ export function PodcastForm({ podcast, action }: PodcastFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [title, setTitle] = useState(podcast?.title || '');
   const [rssSlug, setRssSlug] = useState(podcast?.rss_slug || '');
+  const { pending, data } = useFormState(action);
 
   // Auto-generate RSS slug from title
   useEffect(() => {
@@ -35,15 +37,8 @@ export function PodcastForm({ podcast, action }: PodcastFormProps) {
     }
   }, [title, podcast]);
 
-  async function handleSubmit(formData: FormData) {
-    setIsSubmitting(true);
-    try {
-      await action(formData);
-    } catch (error) {
-      setIsSubmitting(false);
-      throw error;
-    }
-  }
+  // Get error from form state
+  const errorMessage = data?.error;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -55,6 +50,22 @@ export function PodcastForm({ podcast, action }: PodcastFormProps) {
           {podcast ? 'Update your podcast details' : 'Add a new podcast to your account'}
         </p>
       </div>
+
+      {errorMessage && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 00016zm1-8a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-2 0v4a1 1 0 112 0v-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <div className="mt-2 text-sm text-red-700">{errorMessage}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white shadow rounded-lg p-6">
         <form action={handleSubmit} className="space-y-6">
@@ -143,10 +154,10 @@ export function PodcastForm({ podcast, action }: PodcastFormProps) {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={pending || isSubmitting}
               className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Saving...' : podcast ? 'Update Podcast' : 'Create Podcast'}
+              {pending || isSubmitting ? 'Saving...' : podcast ? 'Update Podcast' : 'Create Podcast'}
             </button>
           </div>
         </form>

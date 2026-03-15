@@ -1,12 +1,11 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { PodcastForm } from '@/components/podcast-form';
+import { error } from 'next/response';
 
 export const dynamic = 'force-dynamic';
 
 async function createPodcast(formData: FormData) {
-  'use server';
-
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -21,16 +20,16 @@ async function createPodcast(formData: FormData) {
 
   // Validation
   if (!title || title.trim() === '') {
-    throw new Error('Title is required');
+    return error('Title is required');
   }
 
   if (!rssSlug || rssSlug.trim() === '') {
-    throw new Error('RSS slug is required');
+    return error('RSS slug is required');
   }
 
   // Validate RSS slug format (alphanumeric, hyphens only)
   if (!/^[a-z0-9-]+$/.test(rssSlug)) {
-    throw new Error('RSS slug can only contain lowercase letters, numbers, and hyphens');
+    return error('RSS slug can only contain lowercase letters, numbers, and hyphens');
   }
 
   // Check if RSS slug is unique
@@ -41,11 +40,11 @@ async function createPodcast(formData: FormData) {
     .single();
 
   if (existing) {
-    throw new Error('This RSS slug is already taken. Please choose another.');
+    return error('This RSS slug is already taken. Please choose another.');
   }
 
   // Create podcast
-  const { data: podcast, error } = await supabase
+  const { data: podcast, error: insertError } = await supabase
     .from('podcasts')
     .insert({
       title,
@@ -57,8 +56,8 @@ async function createPodcast(formData: FormData) {
     .select()
     .single();
 
-  if (error || !podcast) {
-    throw new Error(error?.message || 'Failed to create podcast');
+  if (insertError || !podcast) {
+    return error(insertError?.message || 'Failed to create podcast');
   }
 
   redirect('/podcasts');

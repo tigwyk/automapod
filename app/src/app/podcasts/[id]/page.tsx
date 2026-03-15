@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { PodcastForm } from '@/components/podcast-form';
 import DeletePodcastButton from '@/components/delete-podcast-button';
+import { error } from 'next/response';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,16 +41,16 @@ async function updatePodcast(id: string, formData: FormData) {
 
   // Validation
   if (!title || title.trim() === '') {
-    throw new Error('Title is required');
+    return error('Title is required');
   }
 
   if (!rssSlug || rssSlug.trim() === '') {
-    throw new Error('RSS slug is required');
+    return error('RSS slug is required');
   }
 
   // Validate RSS slug format
   if (!/^[a-z0-9-]+$/.test(rssSlug)) {
-    throw new Error('RSS slug can only contain lowercase letters, numbers, and hyphens');
+    return error('RSS slug can only contain lowercase letters, numbers, and hyphens');
   }
 
   // Check if RSS slug is unique (excluding current podcast)
@@ -61,11 +62,11 @@ async function updatePodcast(id: string, formData: FormData) {
     .single();
 
   if (existing) {
-    throw new Error('This RSS slug is already taken. Please choose another.');
+    return error('This RSS slug is already taken. Please choose another.');
   }
 
   // Update podcast
-  const { data: podcast, error } = await supabase
+  const { data: podcast, error: updateError } = await supabase
     .from('podcasts')
     .update({
       title,
@@ -78,8 +79,8 @@ async function updatePodcast(id: string, formData: FormData) {
     .select()
     .single();
 
-  if (error || !podcast) {
-    throw new Error(error?.message || 'Failed to update podcast');
+  if (updateError || !podcast) {
+    return error(updateError?.message || 'Failed to update podcast');
   }
 
   redirect(`/podcasts/${id}`);
