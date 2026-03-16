@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
@@ -98,8 +98,13 @@ function generateRSSFeed(podcast: any, episodes: any[], requestUrl: string): str
   const episodesXml = episodes.map(episode => {
     const pubDate = episode.created_at ? formatDate(episode.created_at) : '';
     const duration = episode.duration_seconds ? formatDuration(episode.duration_seconds) : '0:00:00';
-    const enclosure = episode.audio_url ?
-      `    <enclosure url="${episode.audio_url}" type="audio/mpeg" length="12345678"/>` : '';
+
+    // Use tracking URL for enclosure - points to our tracking endpoint which redirects to R2
+    const trackedAudioUrl = episode.audio_url ?
+      `${baseUrl}/api/track/download?episodeId=${episode.id}` : null;
+
+    const enclosure = trackedAudioUrl ?
+      `    <enclosure url="${trackedAudioUrl}" type="audio/mpeg" length="12345678"/>` : '';
 
     return `    <item>
       <title><![CDATA[${episode.title}]]></title>

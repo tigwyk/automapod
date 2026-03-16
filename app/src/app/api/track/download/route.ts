@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// 1x1 transparent GIF (43 bytes)
+// 1x1 transparent GIF (43 bytes) - for pixel tracking mode
 const PIXEL_GIF = Buffer.from(
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
   'base64'
@@ -19,10 +19,14 @@ type Platform = 'ios' | 'android' | 'web' | 'other';
  * GET /api/track/download?episodeId=xxx
  *
  * Download tracking endpoint for podcast analytics.
- * Returns a 1x1 transparent GIF and records download asynchronously.
+ *
+ * Two modes:
+ * 1. Redirect mode (default): Records download and redirects to actual audio file (for RSS enclosures)
+ * 2. Pixel mode (?pixel=1): Returns 1x1 GIF for download tracking (for analytics pixels)
  *
  * Query params:
  * - episodeId: UUID of the episode (required)
+ * - pixel: Set to "1" to return tracking pixel instead of redirect
  *
  * Privacy features:
  * - IP addresses are hashed (SHA-256) before storage
@@ -32,19 +36,44 @@ type Platform = 'ios' | 'android' | 'web' | 'other';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const episodeId = searchParams.get('episodeId');
+  const pixelMode = searchParams.get('pixel') === '1';
 
   // Validate episodeId
   if (!episodeId || typeof episodeId !== 'string') {
-    // Still return the pixel to avoid breaking RSS readers
-    return new NextResponse(PIXEL_GIF, {
-      status: 200,
-      headers: {
-        'Content-Type': 'image/gif',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-      },
-    });
+    if (pixelMode) {
+      return new NextResponse(PIXEL_GIF, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/gif',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      });
+    }
+    return NextResponse.json({ error: 'Invalid episodeId' }, { status: 400 });
+  }
+
+  // Fetch episode to get the actual audio URL
+  const { data: episode, error: episodeError } = await supabase
+    .from('episodes')
+    .select('id, audio_url')
+    .eq('id', episodeId)
+    .single();
+
+  if (episodeError || !episode || !episode.audio_url) {
+    if (pixelMode) {
+      return new NextResponse(PIXEL_GIF, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/gif',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      });
+    }
+    return NextResponse.json({ error: 'Episode not found' }, { status: 404 });
   }
 
   // Get client IP (check multiple headers for different deployments)
@@ -81,16 +110,23 @@ export async function GET(request: NextRequest) {
     }
   })();
 
-  // Return 1x1 GIF immediately
-  return new NextResponse(PIXEL_GIF, {
-    status: 200,
-    headers: {
-      'Content-Type': 'image/gif',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0',
-    },
-  });
+  // Pixel mode: return 1x1 GIF
+  if (pixelMode) {
+    return new NextResponse(PIXEL_GIF, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/gif',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
+  }
+
+  // Redirect mode: redirect to actual R2 URL
+  // Use 307 Temporary Redirect to preserve the POST method if needed
+  // and ensure the client follows the redirect
+  return NextResponse.redirect(episode.audio_url, 307);
 }
 
 /**
