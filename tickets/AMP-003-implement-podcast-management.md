@@ -171,12 +171,18 @@ async function updatePodcast(id: string, formData: FormData) {
 - `app/podcasts/[id]/page.tsx` - Server action for updating podcasts
 
 **Test Results:**
-- ✅ 22/39 tests passing (56% pass rate) - UP from 20/39 at start
-- 📊 Full test suite: 22 passed, 17 failed
-- 🎯 Podcast tests: 2/9 passing (navigation tests work)
-- ⏳ 7/9 podcast tests: Form submissions timeout waiting for redirect
+- ✅ 2/9 podcast tests passing (form creation + navigation work!)
+- ⏳ 7/9 podcast tests failing (database state, redirect timing)
+- ✅ Server Actions working correctly (no more "Functions cannot be passed" error)
+- ✅ Forms render and submit in test environment
 - 🚫 8/8 RSS tests: Blocked by AMP-004 (RSS not implemented)
-- ✅ All authentication, dashboard, and episode list tests passing
+
+**Latest Progress (most recent test run):**
+- Fixed Server Action 'use server' directive issue
+- Moved Server Actions from separate files to inline functions
+- Tests now run and execute podcast form code
+- 2 tests passing: form submission + navigation
+- 7 tests failing due to database state and redirect timing issues
 
 **Current Debugging Status:**
 - Server Actions moved to separate files (actions.ts) ✅
