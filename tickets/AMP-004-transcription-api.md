@@ -2,7 +2,7 @@
 
 **Type**: feature
 **Priority**: P1
-**Status**: In Progress
+**Status**: Complete
 
 ## Description
 
@@ -12,14 +12,14 @@ Create a simple API endpoint that transcribes audio using Groq's Whisper API. Th
 
 ### In Scope (Phase 1 - MVP)
 - [x] Create ticket and plan work
-- [ ] Install Groq SDK
-- [ ] Create `/api/transcribe` endpoint
-- [ ] Download audio from URL (R2 or test URL)
-- [ ] Send to Groq Whisper API
-- [ ] Save transcript to database
-- [ ] Return transcript to caller
-- [ ] Basic error handling
-- [ ] Test with real audio file
+- [x] Install Groq SDK
+- [x] Create `/api/transcribe` endpoint
+- [x] Download audio from URL (R2 or test URL)
+- [x] Send to Groq Whisper API
+- [x] Save transcript to database
+- [x] Return transcript to caller
+- [x] Basic error handling
+- [x] Test with real audio file
 
 ### Out Scope (Phase 2 - Future)
 - [ ] BullMQ + Redis queue
@@ -67,12 +67,12 @@ Create a simple API endpoint that transcribes audio using Groq's Whisper API. Th
 - AMP-002 (database schema) ✅
 
 ## Definition of Done
-- [ ] Groq SDK installed
-- [ ] API endpoint created
-- [ ] Can transcribe a test audio file
-- [ ] Transcript saved to database
-- [ ] Error cases handled gracefully
-- [ ] Can call endpoint and get transcript back
+- [x] Groq SDK installed
+- [x] API endpoint created
+- [x] Can transcribe a test audio file
+- [x] Transcript saved to database
+- [x] Error cases handled gracefully
+- [x] Can call endpoint and get transcript back
 
 ## Technical Details
 
