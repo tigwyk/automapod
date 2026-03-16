@@ -57,7 +57,7 @@ test.describe('RSS Feed Generation', () => {
     const response = await request.get(`/rss/${slug}`);
 
     // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() === 404) {
+    if (response.status() !== 200) {
       expect(response.status()).toBe(404);
       return;
     }
@@ -75,7 +75,7 @@ test.describe('RSS Feed Generation', () => {
     const response = await request.get(`/rss/${slug}`);
 
     // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() === 404) {
+    if (response.status() !== 200) {
       expect(response.status()).toBe(404);
       return;
     }
@@ -92,7 +92,7 @@ test.describe('RSS Feed Generation', () => {
     const response = await request.get(`/rss/${slug}`);
 
     // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() === 404) {
+    if (response.status() !== 200) {
       expect(response.status()).toBe(404);
       return;
     }
@@ -113,7 +113,7 @@ test.describe('RSS Feed Generation', () => {
     const response = await request.get(`/rss/${slug}`);
 
     // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() === 404) {
+    if (response.status() !== 200) {
       expect(response.status()).toBe(404);
       return;
     }
@@ -132,7 +132,7 @@ test.describe('RSS Feed Generation', () => {
     const response = await request.get(`/rss/${slug}`);
 
     // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() === 404) {
+    if (response.status() !== 200) {
       expect(response.status()).toBe(404);
       return;
     }
@@ -156,7 +156,7 @@ test.describe('RSS Feed Generation', () => {
     const response = await request.get(`/rss/${slug}`);
 
     // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() === 404) {
+    if (response.status() !== 200) {
       expect(response.status()).toBe(404);
       return;
     }
@@ -178,7 +178,7 @@ test.describe('RSS Feed Generation', () => {
     const response = await request.get(`/rss/${slug}`);
 
     // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() === 404) {
+    if (response.status() !== 200) {
       expect(response.status()).toBe(404);
       return;
     }
