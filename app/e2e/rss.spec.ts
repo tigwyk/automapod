@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { getTestCredentials } from './test-utils';
 
-// Helper function to create a test podcast
-async function createTestPodcast(page: any) {
+interface TestPodcast {
+  slug: string;
+  title: string;
+}
+
+// Helper function to create a test podcast with RSS feed verification
+async function createTestPodcast(page: any): Promise<TestPodcast> {
   const timestamp = Date.now();
   const testPodcastSlug = `test-podcast-${timestamp}`;
   const testPodcastTitle = `Test Podcast ${timestamp}`;
@@ -15,10 +20,37 @@ async function createTestPodcast(page: any) {
   await page.fill('textarea#description', 'Test podcast for RSS feed generation');
   await page.click('button[type="submit"]');
 
-  // Wait for navigation or timeout
-  await page.waitForTimeout(5000);
+  // Wait for navigation to complete
+  await page.waitForURL('/podcasts', { timeout: 10000 });
 
-  return { slug: testPodcastSlug, title: testPodcastTitle, success: !page.url().includes('/podcasts/new') };
+  // Verify podcast was actually created by checking RSS feed accessibility
+  // Use page.goto() instead of request.get() to preserve cookies/session
+  await page.goto(`/rss/${testPodcastSlug}`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if we got valid RSS content (not an error)
+  const content = await page.content();
+  const hasError = content.includes('{"error"') || content.includes('Podcast not found');
+
+  if (hasError) {
+    throw new Error(
+      `Podcast creation verification failed: RSS feed for slug "${testPodcastSlug}" returned an error.\n` +
+      `This indicates the podcast creation failed or the RSS feed is not accessible.`
+    );
+  }
+
+  // Verify it's actually RSS content
+  const hasRSS = content.includes('<?xml version="1.0"') || content.includes('<rss');
+  if (!hasRSS) {
+    throw new Error(
+      `Podcast creation verification failed: RSS feed for slug "${testPodcastSlug}" didn't return RSS content.\n` +
+      `Content preview: ${content.substring(0, 200)}`
+    );
+  }
+
+  console.log(`✓ Verified podcast created and RSS feed accessible: ${testPodcastSlug}`);
+
+  return { slug: testPodcastSlug, title: testPodcastTitle };
 }
 
 test.describe('RSS Feed Generation', () => {
@@ -37,11 +69,11 @@ test.describe('RSS Feed Generation', () => {
     expect(response.status()).toBe(404);
   });
 
-  test('should generate RSS feed for podcast', async ({ page }) => {
-    // Create a test podcast
-    const { slug } = await createTestPodcast(page);
+  test('should generate RSS feed for podcast', async ({ page, request }) => {
+    // Create a test podcast (verified via RSS feed)
+    const podcast = await createTestPodcast(page);
 
-    await page.goto(`/rss/${slug}`);
+    await page.goto(`/rss/${podcast.slug}`);
     await page.waitForLoadState('networkidle');
 
     // Should not be a JSON error
@@ -51,16 +83,13 @@ test.describe('RSS Feed Generation', () => {
   });
 
   test('should return XML content type', async ({ page, request }) => {
-    // Create a test podcast
-    const { slug } = await createTestPodcast(page);
+    // Create a test podcast (verified via RSS feed)
+    const podcast = await createTestPodcast(page);
 
-    const response = await request.get(`/rss/${slug}`);
+    const response = await page.request.get(`/rss/${podcast.slug}`);
 
-    // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() !== 200) {
-      expect(response.status()).toBe(404);
-      return;
-    }
+    // Response should be successful
+    expect(response.status()).toBe(200);
 
     // Check content type
     const contentType = response.headers()['content-type'];
@@ -69,16 +98,13 @@ test.describe('RSS Feed Generation', () => {
   });
 
   test('should set proper caching headers', async ({ page, request }) => {
-    // Create a test podcast
-    const { slug } = await createTestPodcast(page);
+    // Create a test podcast (verified via RSS feed)
+    const podcast = await createTestPodcast(page);
 
-    const response = await request.get(`/rss/${slug}`);
+    const response = await page.request.get(`/rss/${podcast.slug}`);
 
-    // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() !== 200) {
-      expect(response.status()).toBe(404);
-      return;
-    }
+    // Response should be successful
+    expect(response.status()).toBe(200);
 
     // Check Cache-Control header exists
     const cacheControl = response.headers()['cache-control'];
@@ -86,16 +112,13 @@ test.describe('RSS Feed Generation', () => {
   });
 
   test('should include podcast metadata in RSS feed', async ({ page, request }) => {
-    // Create a test podcast
-    const { slug } = await createTestPodcast(page);
+    // Create a test podcast (verified via RSS feed)
+    const podcast = await createTestPodcast(page);
 
-    const response = await request.get(`/rss/${slug}`);
+    const response = await page.request.get(`/rss/${podcast.slug}`);
 
-    // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() !== 200) {
-      expect(response.status()).toBe(404);
-      return;
-    }
+    // Response should be successful
+    expect(response.status()).toBe(200);
 
     const text = await response.text();
 
@@ -104,19 +127,19 @@ test.describe('RSS Feed Generation', () => {
     expect(text).toContain('<rss');
     expect(text).toContain('<channel>');
     expect(text).toContain('<title>');
+
+    // Verify the actual podcast title is in the feed
+    expect(text).toContain(podcast.title);
   });
 
   test('should include iTunes namespace tags', async ({ page, request }) => {
-    // Create a test podcast
-    const { slug } = await createTestPodcast(page);
+    // Create a test podcast (verified via RSS feed)
+    const podcast = await createTestPodcast(page);
 
-    const response = await request.get(`/rss/${slug}`);
+    const response = await page.request.get(`/rss/${podcast.slug}`);
 
-    // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() !== 200) {
-      expect(response.status()).toBe(404);
-      return;
-    }
+    // Response should be successful
+    expect(response.status()).toBe(200);
 
     const text = await response.text();
 
@@ -126,16 +149,13 @@ test.describe('RSS Feed Generation', () => {
   });
 
   test('should include episodes in RSS feed', async ({ page, request }) => {
-    // Create a test podcast
-    const { slug } = await createTestPodcast(page);
+    // Create a test podcast (verified via RSS feed)
+    const podcast = await createTestPodcast(page);
 
-    const response = await request.get(`/rss/${slug}`);
+    const response = await page.request.get(`/rss/${podcast.slug}`);
 
-    // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() !== 200) {
-      expect(response.status()).toBe(404);
-      return;
-    }
+    // Response should be successful
+    expect(response.status()).toBe(200);
 
     const text = await response.text();
 
@@ -150,16 +170,13 @@ test.describe('RSS Feed Generation', () => {
   });
 
   test('should handle podcast with no episodes', async ({ page, request }) => {
-    // Create a test podcast
-    const { slug } = await createTestPodcast(page);
+    // Create a test podcast (verified via RSS feed)
+    const podcast = await createTestPodcast(page);
 
-    const response = await request.get(`/rss/${slug}`);
+    const response = await page.request.get(`/rss/${podcast.slug}`);
 
-    // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() !== 200) {
-      expect(response.status()).toBe(404);
-      return;
-    }
+    // Response should be successful
+    expect(response.status()).toBe(200);
 
     const text = await response.text();
 
@@ -167,21 +184,18 @@ test.describe('RSS Feed Generation', () => {
     expect(text).toContain('<channel>');
     expect(text).toContain('<title>');
 
-    // Response should be successful
-    expect(response.status()).toBe(200);
+    // Verify the actual podcast title is in the feed
+    expect(text).toContain(podcast.title);
   });
 
   test('should escape special characters in XML', async ({ page, request }) => {
-    // Create a test podcast
-    const { slug } = await createTestPodcast(page);
+    // Create a test podcast (verified via RSS feed)
+    const podcast = await createTestPodcast(page);
 
-    const response = await request.get(`/rss/${slug}`);
+    const response = await page.request.get(`/rss/${podcast.slug}`);
 
-    // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() !== 200) {
-      expect(response.status()).toBe(404);
-      return;
-    }
+    // Response should be successful
+    expect(response.status()).toBe(200);
 
     const text = await response.text();
 
@@ -190,16 +204,13 @@ test.describe('RSS Feed Generation', () => {
   });
 
   test('should limit episodes to 100 in RSS feed', async ({ page, request }) => {
-    // Create a test podcast
-    const { slug } = await createTestPodcast(page);
+    // Create a test podcast (verified via RSS feed)
+    const podcast = await createTestPodcast(page);
 
-    const response = await request.get(`/rss/${slug}`);
+    const response = await page.request.get(`/rss/${podcast.slug}`);
 
-    // If podcast wasn't created, we get a 404 (also valid test)
-    if (response.status() === 404) {
-      expect(response.status()).toBe(404);
-      return;
-    }
+    // Response should be successful
+    expect(response.status()).toBe(200);
 
     const text = await response.text();
 
