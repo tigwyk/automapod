@@ -2,7 +2,7 @@
 
 **Type**: bugfix
 **Priority**: P1
-**Status**: In Progress
+**Status**: ✅ Complete
 
 ## Description
 
