@@ -140,19 +140,24 @@ export default async function EpisodeDetailPage({
         )}
       </div>
 
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Danger Zone</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Once you delete an episode, there is no going back.
-        </p>
-        <form action={deleteEpisode.bind(null, episode.id)}>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Manage Episode</h2>
+        <div className="flex gap-4">
+          <a
+            href={`/episodes/${id}/edit`}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 inline-block text-center pt-2"
           >
-            Delete Episode
-          </button>
-        </form>
+            Edit Episode
+          </a>
+          <form action={deleteEpisode.bind(null, episode.id)} className="inline">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              Delete Episode
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
