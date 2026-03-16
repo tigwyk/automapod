@@ -76,9 +76,17 @@ export default async function EpisodeDetailPage({
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">{episode.title}</h1>
-        <p className="text-gray-600 mt-1">{episode.description || 'No description'}</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{episode.title}</h1>
+          <p className="text-gray-600 mt-1">{episode.description || 'No description'}</p>
+        </div>
+        <a
+          href={`/analytics/episode/${id}`}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          View Analytics
+        </a>
       </div>
 
       {episode.audio_url && (
