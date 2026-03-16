@@ -1,22 +1,24 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import Groq from 'groq-sdk';
+import { addTranscriptionJob, getTranscriptionJobState } from '@/lib/queue';
 
 export const runtime = 'nodejs';
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 /**
  * POST /api/transcribe
  *
- * Transcribes an episode's audio using Groq's Whisper API.
+ * Queues an episode for transcription using BullMQ.
+ * The actual transcription is processed by a worker.
  *
  * Request body:
  * { episodeId: string }
  *
- * Response:
- * { transcript: string }
+ * Response (queued):
+ * { jobId: string, status: 'queued', episodeId: string }
+ *
+ * Response (already queued/processing):
+ * { jobId: string, status: 'processing'|'queued', state: JobState }
  */
 export async function POST(request: Request) {
   try {
@@ -74,65 +76,98 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update status to processing
+    // Check if there's already a job for this episode
+    const existingJob = await getTranscriptionJobState(episodeId);
+    if (existingJob && existingJob.state !== 'completed' && existingJob.state !== 'failed') {
+      return NextResponse.json({
+        jobId: existingJob.id,
+        status: existingJob.state,
+        episodeId,
+        message: 'Transcription already in progress',
+      });
+    }
+
+    // Update status to queued
     await supabase
       .from('episodes')
-      .update({ transcript_status: 'processing' })
+      .update({ transcript_status: 'queued' })
       .eq('id', episodeId);
 
-    try {
-      // Download audio from R2
-      const audioResponse = await fetch(episode.audio_url);
-      if (!audioResponse.ok) {
-        throw new Error(`Failed to download audio: ${audioResponse.status}`);
-      }
+    // Add job to queue
+    const jobId = await addTranscriptionJob({
+      episodeId: episode.id,
+      userId: user.id,
+      audioUrl: episode.audio_url,
+      title: episode.title,
+    });
 
-      const audioBlob = await audioResponse.blob();
-      const audioFile = new File([audioBlob], 'audio.mp3', { type: 'audio/mpeg' });
-
-      // Send to Groq Whisper API
-      const transcription = await groq.audio.transcriptions.create({
-        file: audioFile,
-        model: 'whisper-large-v3',
-        response_format: 'text',
-      });
-
-      // Save transcript to database
-      const { error: updateError } = await supabase
-        .from('episodes')
-        .update({
-          transcript: transcription.text,
-          transcript_status: 'completed',
-        })
-        .eq('id', episodeId);
-
-      if (updateError) {
-        throw new Error(`Failed to save transcript: ${updateError.message}`);
-      }
-
-      return NextResponse.json({
-        transcript: transcription.text,
-        episodeId: episode.id,
-        title: episode.title,
-      });
-
-    } catch (error) {
-      // Mark as failed on transcription error
-      await supabase
-        .from('episodes')
-        .update({ transcript_status: 'pending' })
-        .eq('id', episodeId);
-
-      const errorMessage = error instanceof Error ? error.message : 'Transcription failed';
-
-      return NextResponse.json(
-        { error: errorMessage },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json({
+      jobId,
+      status: 'queued',
+      episodeId: episode.id,
+    });
 
   } catch (error) {
     console.error('Transcription API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * GET /api/transcribe?episodeId=<id>
+ *
+ * Get the status of a transcription job
+ */
+export async function GET(request: Request) {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+        },
+      }
+    );
+
+    // Authenticate user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const episodeId = searchParams.get('episodeId');
+
+    if (!episodeId) {
+      return NextResponse.json(
+        { error: 'episodeId query parameter is required' },
+        { status: 400 }
+      );
+    }
+
+    const jobState = await getTranscriptionJobState(episodeId);
+
+    if (!jobState) {
+      return NextResponse.json(
+        { error: 'No job found for this episode' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(jobState);
+
+  } catch (error) {
+    console.error('Transcription status API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
