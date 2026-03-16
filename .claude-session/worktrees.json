@@ -1,0 +1,55 @@
+{
+  "active_worktrees": ["magic0", "magic1", "magic2", "magic3", "magic4", "magic5", "magic6", "magic7"],
+  "assignments": {
+    "magic0": {
+      "purpose": "stable",
+      "branch": "main",
+      "status": "ready",
+      "description": "Main branch, keep clean"
+    },
+    "magic1": {
+      "purpose": "feature",
+      "branch": "feature/init-magic1",
+      "status": "ready",
+      "description": "Feature work"
+    },
+    "magic2": {
+      "purpose": "feature",
+      "branch": "feature/init-magic2",
+      "status": "ready",
+      "description": "Feature work"
+    },
+    "magic3": {
+      "purpose": "feature",
+      "branch": "feature/init-magic3",
+      "status": "ready",
+      "description": "Feature work"
+    },
+    "magic4": {
+      "purpose": "fix",
+      "branch": "fix/init-magic4",
+      "status": "ready",
+      "description": "Bug fixes"
+    },
+    "magic5": {
+      "purpose": "fix",
+      "branch": "fix/init-magic5",
+      "status": "ready",
+      "description": "Bug fixes"
+    },
+    "magic6": {
+      "purpose": "experiment",
+      "branch": "experiment/init-magic6",
+      "status": "ready",
+      "description": "Experiments"
+    },
+    "magic7": {
+      "purpose": "experiment",
+      "branch": "experiment/init-magic7",
+      "status": "ready",
+      "description": "Experiments"
+    }
+  },
+  "dependencies": {},
+  "created_at": "2026-03-16T00:44:57Z"
+}
