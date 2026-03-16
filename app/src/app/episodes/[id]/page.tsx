@@ -81,6 +81,22 @@ export default async function EpisodeDetailPage({
         <p className="text-gray-600 mt-1">{episode.description || 'No description'}</p>
       </div>
 
+      {episode.audio_url && (
+        <div className="bg-white shadow rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Audio Player</h2>
+          <audio
+            controls
+            src={episode.audio_url}
+            className="w-full"
+          >
+            Your browser does not support the audio element.
+          </audio>
+          <p className="mt-2 text-sm text-gray-500 break-all">
+            <span className="font-medium">URL:</span> {episode.audio_url}
+          </p>
+        </div>
+      )}
+
       <div className="bg-white shadow rounded-lg p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Episode Details</h2>
         <dl className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
