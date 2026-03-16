@@ -108,8 +108,8 @@ async function updatePodcast(id: string, formData: FormData) {
 - [x] RSS slug auto-generates from title
 - [x] RSS slug validation works
 - [x] Form validation displays errors
-- [ ] All 10 podcast E2E tests passing
-- [ ] Code committed to feature branch
+- [ ] All 10 podcast E2E tests passing (2/9 passing - investigating timeouts)
+- [x] Code committed to feature branch
 - [ ] Pass rate reaches 30/39 (77%)
 
 ## Testing
@@ -171,12 +171,23 @@ async function updatePodcast(id: string, formData: FormData) {
 - `app/podcasts/[id]/page.tsx` - Server action for updating podcasts
 
 **Test Results:**
-- Podcast tests running... (waiting for completion)
+- 2/9 tests passing (navigation tests)
+- 7/9 tests timing out on form submission redirect
+- Tests are failing at `page.waitForURL('/podcasts')` after form submit
+- Server Actions are correctly configured with 'use server' directive
+- Dev server running for manual testing
+
+**Current Debugging Status:**
+- Server Actions moved to separate files (actions.ts)
+- useFormState correctly configured with formAction
+- SubmitButton component using useFormStatus for pending state
+- Forms submit but redirect not happening in tests
+- Need to investigate: database state, form submission flow, test environment
 
 **Technical Implementation:**
 - Client Component for RSS slug auto-generation
-- Server Actions for form submission
+- Server Actions in separate files with 'use server' directive
 - Error handling with `useFormState` hook
-- Validation using Next.js 15 `error()` function
+- SubmitButton with `useFormStatus` for pending state
 - RSS slug uniqueness checking
 - Form pattern matching upload form design
