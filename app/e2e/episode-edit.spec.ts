@@ -37,17 +37,21 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    // Get episode ID
-    const currentUrl = page.url();
-    const episodeIdMatch = currentUrl.match(/\/episodes\/([a-f0-9-]+)/);
+    // Upload redirects to /episodes list - navigate there
+    await page.goto('/episodes');
+    await page.waitForLoadState('networkidle');
 
-    if (!episodeIdMatch) {
-      test.skip(true, 'Could not extract episode ID');
+    // Find the episode in the list by title and click on it
+    const episodeLink = page.locator(`a:has-text("${testTitle}")`);
+    const linkCount = await episodeLink.count();
+
+    if (linkCount === 0) {
+      test.skip(true, 'Could not find episode in list');
       return;
     }
 
-    // Go to episode detail page
-    await page.goto(currentUrl);
+    // Click on episode to go to episode detail page
+    await episodeLink.first().click();
     await page.waitForLoadState('networkidle');
 
     // Check for edit button
@@ -80,15 +84,21 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    const currentUrl = page.url();
-    const episodeIdMatch = currentUrl.match(/\/episodes\/([a-f0-9-]+)/);
+    // Upload redirects to /episodes list - navigate there
+    await page.goto('/episodes');
+    await page.waitForLoadState('networkidle');
 
-    if (!episodeIdMatch) {
-      test.skip(true, 'Could not extract episode ID');
+    // Find the episode in the list by title and click on it
+    const episodeLink = page.locator(`a:has-text("${testTitle}")`);
+    const linkCount = await episodeLink.count();
+
+    if (linkCount === 0) {
+      test.skip(true, 'Could not find episode in list');
       return;
     }
 
-    await page.goto(currentUrl);
+    // Click on episode to go to episode detail page
+    await episodeLink.first().click();
     await page.waitForLoadState('networkidle');
 
     // Click edit button
@@ -132,13 +142,25 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    const currentUrl = page.url();
-    const episodeIdMatch = currentUrl.match(/\/episodes\/([a-f0-9-]+)/);
+    // Upload redirects to /episodes list - navigate there
+    await page.goto('/episodes');
+    await page.waitForLoadState('networkidle');
 
-    if (!episodeIdMatch) {
-      test.skip(true, 'Could not extract episode ID');
+    // Find the episode in the list by title and click on it
+    const episodeLink = page.locator(`a:has-text("${testTitle}")`);
+    const linkCount = await episodeLink.count();
+
+    if (linkCount === 0) {
+      test.skip(true, 'Could not find episode in list');
       return;
     }
+
+    // Click on episode to go to episode detail page
+    await episodeLink.first().click();
+    await page.waitForLoadState('networkidle');
+
+    // Get current URL with episode ID and navigate to edit page
+    const currentUrl = page.url();
 
     // Navigate to edit page
     await page.goto(`${currentUrl}/edit`);
@@ -178,13 +200,25 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    const currentUrl = page.url();
-    const episodeIdMatch = currentUrl.match(/\/episodes\/([a-f0-9-]+)/);
+    // Upload redirects to /episodes list - navigate there
+    await page.goto('/episodes');
+    await page.waitForLoadState('networkidle');
 
-    if (!episodeIdMatch) {
-      test.skip(true, 'Could not extract episode ID');
+    // Find the episode in the list by title and click on it
+    const episodeLink = page.locator(`a:has-text("${originalTitle}")`);
+    const linkCount = await episodeLink.count();
+
+    if (linkCount === 0) {
+      test.skip(true, 'Could not find episode in list');
       return;
     }
+
+    // Click on episode to go to episode detail page
+    await episodeLink.first().click();
+    await page.waitForLoadState('networkidle');
+
+    // Get current URL with episode ID and navigate to edit page
+    const currentUrl = page.url();
 
     // Go to edit page
     await page.goto(`${currentUrl}/edit`);
@@ -234,13 +268,25 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    const currentUrl = page.url();
-    const episodeIdMatch = currentUrl.match(/\/episodes\/([a-f0-9-]+)/);
+    // Upload redirects to /episodes list - navigate there
+    await page.goto('/episodes');
+    await page.waitForLoadState('networkidle');
 
-    if (!episodeIdMatch) {
-      test.skip(true, 'Could not extract episode ID');
+    // Find the episode in the list by title and click on it
+    const episodeLink = page.locator(`a:has-text("${testTitle}")`);
+    const linkCount = await episodeLink.count();
+
+    if (linkCount === 0) {
+      test.skip(true, 'Could not find episode in list');
       return;
     }
+
+    // Click on episode to go to episode detail page
+    await episodeLink.first().click();
+    await page.waitForLoadState('networkidle');
+
+    // Get current URL with episode ID and navigate to edit page
+    const currentUrl = page.url();
 
     // Go to edit page
     await page.goto(`${currentUrl}/edit`);
@@ -279,13 +325,25 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    const currentUrl = page.url();
-    const episodeIdMatch = currentUrl.match(/\/episodes\/([a-f0-9-]+)/);
+    // Upload redirects to /episodes list - navigate there
+    await page.goto('/episodes');
+    await page.waitForLoadState('networkidle');
 
-    if (!episodeIdMatch) {
-      test.skip(true, 'Could not extract episode ID');
+    // Find the episode in the list by title and click on it
+    const episodeLink = page.locator(`a:has-text("${testTitle}")`);
+    const linkCount = await episodeLink.count();
+
+    if (linkCount === 0) {
+      test.skip(true, 'Could not find episode in list');
       return;
     }
+
+    // Click on episode to go to episode detail page
+    await episodeLink.first().click();
+    await page.waitForLoadState('networkidle');
+
+    // Get current URL with episode ID and navigate to edit page
+    const currentUrl = page.url();
 
     // Go to edit page
     await page.goto(`${currentUrl}/edit`);
