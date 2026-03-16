@@ -113,4 +113,28 @@ await supabase
 
 ---
 
+## Completion
+
+**Completed**: 2026-03-15
+**PR**: https://github.com/tigwyk/automapod/pull/6
+**Commit**: 8c585ba
+**Files changed**: 13 files, 1638 insertions(+), 295 deletions(-)
+
+### Delivered
+- ✅ POST /api/transcribe endpoint with Groq Whisper API
+- ✅ Authentication required (401 handling)
+- ✅ Input validation (400 for missing episodeId)
+- ✅ Episode not found handling (404)
+- ✅ Audio download from R2
+- ✅ Transcript saved to database
+- ✅ Status updates (processing → completed/failed)
+- ✅ E2E tests (3 passing, 3 skipped for real audio)
+- ✅ Tailwind CSS v4 PostCSS fix (bonus fix)
+
+### Test Results
+- 63 E2E tests passing
+- 3 tests skipped (require real audio with speech content)
+
+---
+
 *Created: 2026-03-11*
