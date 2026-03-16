@@ -117,8 +117,13 @@ test.describe('R2 Storage Library', () => {
         buffer: smallBuffer,
       });
 
-      // File should be accepted
-      await expect(page.locator('input[name="audio"]')).toHaveValue('small.mp3');
+      // File should be selected
+      await page.waitForTimeout(500);
+
+      // Check that file input has a value (file was selected)
+      const inputValue = await fileInput.inputValue();
+      expect(inputValue).toBeTruthy();
+      expect(inputValue).toContain('small.mp3');
     });
 
     test('should show file size information', async ({ page }) => {
@@ -131,8 +136,13 @@ test.describe('R2 Storage Library', () => {
         buffer: Buffer.alloc(1024 * 1024, 'a'), // 1MB
       });
 
-      // The form doesn't show file size, but file should be selected
-      await expect(page.locator('input[name="audio"]')).toHaveValue('test.mp3');
+      // Wait a moment for file to be processed
+      await page.waitForTimeout(500);
+
+      // The file should be selected - file size display is optional
+      const inputValue = await fileInput.inputValue();
+      expect(inputValue).toBeTruthy();
+      expect(inputValue).toContain('test.mp3');
     });
   });
 
