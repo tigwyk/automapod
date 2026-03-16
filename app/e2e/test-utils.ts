@@ -29,3 +29,4 @@ export function getTestCredentials() {
     password: getRequiredEnv('TEST_USER_PASSWORD'),
   };
 }
+
