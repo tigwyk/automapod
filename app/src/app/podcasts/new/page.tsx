@@ -1,61 +1,69 @@
 import { redirect } from 'next/navigation';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import PodcastForm from '@/components/podcast-form';
+import { createClient } from '@/lib/supabase/server';
+import { PodcastForm } from '@/components/podcast-form';
 
 export const dynamic = 'force-dynamic';
 
-async function createPodcast(data: {
-  title: string;
-  description: string;
-  cover_image_url: string;
-  rss_slug: string;
-}) {
+async function createPodcast(prevState: { error?: string } | null, formData: FormData) {
   'use server';
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
+  const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     redirect('/login');
   }
 
-  const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/podcasts`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
+  const title = formData.get('title') as string;
+  const description = formData.get('description') as string || '';
+  const rssSlug = formData.get('rss_slug') as string;
+  const coverImageUrl = formData.get('cover_image_url') as string || '';
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to create podcast');
+  // Validation
+  if (!title || title.trim() === '') {
+    return { error: 'Title is required' };
   }
+
+  if (!rssSlug || rssSlug.trim() === '') {
+    return { error: 'RSS slug is required' };
+  }
+
+  // Validate RSS slug format (alphanumeric, hyphens only)
+  if (!/^[a-z0-9-]+$/.test(rssSlug)) {
+    return { error: 'RSS slug can only contain lowercase letters, numbers, and hyphens' };
+  }
+
+  // Check if RSS slug is unique
+  const { data: existing } = await supabase
+    .from('podcasts')
+    .select('id')
+    .eq('rss_slug', rssSlug)
+    .single();
+
+  if (existing) {
+    return { error: 'This RSS slug is already taken. Please choose another.' };
+  }
+
+  // Create podcast
+  const { data: podcast, error: insertError } = await supabase
+    .from('podcasts')
+    .insert({
+      title,
+      description,
+      rss_slug: rssSlug,
+      cover_image_url: coverImageUrl,
+      user_id: user.id,
+    })
+    .select()
+    .single();
+
+  if (insertError || !podcast) {
+    return { error: insertError?.message || 'Failed to create podcast' };
+  }
+
+  redirect('/podcasts');
 }
 
-export default function NewPodcastPage() {
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Create New Podcast</h1>
-        <p className="text-gray-600 mt-1">Set up a new podcast show</p>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <PodcastForm onSubmit={createPodcast} submitLabel="Create Podcast" />
-      </div>
-    </div>
-  );
+export default async function NewPodcastPage() {
+  return <PodcastForm action={createPodcast} />;
 }
