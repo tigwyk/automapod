@@ -24,12 +24,40 @@ async function getEpisodes() {
     redirect('/login');
   }
 
-  const { data: episodes } = await supabase
+  // Get episodes owned directly by user (standalone episodes)
+  const { data: directEpisodes } = await supabase
     .from('episodes')
     .select('*')
-    .order('created_at', { ascending: false });
+    .eq('user_id', user.id);
 
-  return { episodes: episodes || [] };
+  // Get user's podcast IDs
+  const { data: podcasts } = await supabase
+    .from('podcasts')
+    .select('id')
+    .eq('user_id', user.id);
+
+  const podcastIds = podcasts?.map(p => p.id) || [];
+
+  // Get episodes through podcasts
+  let podcastEpisodes = [];
+  if (podcastIds.length > 0) {
+    const { data: podcastEpisodesData } = await supabase
+      .from('episodes')
+      .select('*')
+      .in('podcast_id', podcastIds);
+
+    podcastEpisodes = podcastEpisodesData || [];
+  }
+
+  // Combine and deduplicate (by id), then sort
+  const allEpisodes = [...(directEpisodes || []), ...podcastEpisodes];
+  const uniqueEpisodes = Array.from(
+    new Map(allEpisodes.map(e => [e.id, e])).values()
+  ).sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
+  return { episodes: uniqueEpisodes };
 }
 
 export default async function EpisodesPage() {

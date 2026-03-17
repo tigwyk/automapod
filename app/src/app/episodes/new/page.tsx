@@ -70,6 +70,7 @@ async function uploadEpisode(formData: FormData) {
       duration_seconds: null,
       transcript_status: 'pending',
       podcast_id: podcastId || null,
+      user_id: user.id,  // Set owner for proper ownership tracking
     })
     .select()
     .single();
