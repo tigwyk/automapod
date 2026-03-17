@@ -1,11 +1,18 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect, notFound } from 'next/navigation';
-import { revalidatePath } from 'next/cache';
+import DeleteEpisodeButton from './delete-button';
 
 export const dynamic = 'force-dynamic';
 
-async function getEpisode(id: string) {
+/**
+ * Gets an episode with ownership verification.
+ * Returns the episode only if the current user owns it.
+ * Ownership is determined by either:
+ * 1. episode.user_id matches the user (for standalone episodes)
+ * 2. episode.podcast_id belongs to a podcast the user owns
+ */
+async function getAuthenticatedEpisode(id: string) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,42 +31,37 @@ async function getEpisode(id: string) {
     redirect('/login');
   }
 
+  // Get episode - use a simple query first
   const { data: episode } = await supabase
     .from('episodes')
     .select('*')
     .eq('id', id)
     .single();
 
-  return episode;
-}
-
-async function deleteEpisode(id: string) {
-  'use server';
-
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
-
-  const { error } = await supabase
-    .from('episodes')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    throw new Error(error.message);
+  if (!episode) {
+    return null;
   }
 
-  revalidatePath('/episodes');
-  redirect('/episodes');
+  // Verify ownership: user must own the episode directly OR through its podcast
+  const ownsDirectly = episode.user_id === user.id;
+
+  let ownsViaPodcast = false;
+  if (!ownsDirectly && episode.podcast_id) {
+    // Check if the podcast belongs to the user
+    const { data: podcast } = await supabase
+      .from('podcasts')
+      .select('user_id')
+      .eq('id', episode.podcast_id)
+      .single();
+
+    ownsViaPodcast = podcast?.user_id === user.id;
+  }
+
+  if (!ownsDirectly && !ownsViaPodcast) {
+    return null;
+  }
+
+  return episode;
 }
 
 export default async function EpisodeDetailPage({
@@ -68,7 +70,7 @@ export default async function EpisodeDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const episode = await getEpisode(id);
+  const episode = await getAuthenticatedEpisode(id);
 
   if (!episode) {
     notFound();
@@ -142,21 +144,14 @@ export default async function EpisodeDetailPage({
 
       <div className="bg-white shadow rounded-lg p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Manage Episode</h2>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
           <a
             href={`/episodes/${id}/edit`}
-            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 inline-block text-center pt-2"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 inline-flex items-center"
           >
             Edit Episode
           </a>
-          <form action={deleteEpisode.bind(null, episode.id)} className="inline">
-            <button
-              type="submit"
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              Delete Episode
-            </button>
-          </form>
+          <DeleteEpisodeButton episodeId={episode.id} episodeTitle={episode.title} />
         </div>
       </div>
     </div>

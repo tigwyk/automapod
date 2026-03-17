@@ -3,6 +3,60 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { deleteFromR2, R2_EPISODES_CUSTOM_DOMAIN } from '@/lib/r2';
 
+/**
+ * Verifies that the user owns the episode.
+ * Ownership is determined by either:
+ * 1. episode.user_id matches the user (for standalone episodes)
+ * 2. episode.podcast_id belongs to a podcast the user owns
+ * Returns the episode if owned, null otherwise.
+ */
+async function getAuthenticatedEpisode(id: string, userId: string) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+      },
+    }
+  );
+
+  // Get episode - use a simple query
+  const { data: episode } = await supabase
+    .from('episodes')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (!episode) {
+    return null;
+  }
+
+  // Verify ownership: user must own the episode directly OR through its podcast
+  const ownsDirectly = episode.user_id === userId;
+
+  let ownsViaPodcast = false;
+  if (!ownsDirectly && episode.podcast_id) {
+    // Check if the podcast belongs to the user
+    const { data: podcast } = await supabase
+      .from('podcasts')
+      .select('user_id')
+      .eq('id', episode.podcast_id)
+      .single();
+
+    ownsViaPodcast = podcast?.user_id === userId;
+  }
+
+  if (!ownsDirectly && !ownsViaPodcast) {
+    return null;
+  }
+
+  return episode;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -27,18 +81,77 @@ export async function GET(
     }
 
     const { id } = await params;
-    const { data: episode, error } = await supabase
-      .from('episodes')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const episode = await getAuthenticatedEpisode(id, user.id);
 
-    if (error || !episode) {
+    if (!episode) {
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 });
     }
 
     return NextResponse.json({ episode });
   } catch (error) {
+    console.error('Error fetching episode:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+        },
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+
+    // Verify ownership before updating
+    const episode = await getAuthenticatedEpisode(id, user.id);
+    if (!episode) {
+      return NextResponse.json({ error: 'Episode not found' }, { status: 404 });
+    }
+
+    // Validate title
+    const title = body.title?.trim();
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    }
+
+    // Update the episode
+    const { data: updatedEpisode, error } = await supabase
+      .from('episodes')
+      .update({
+        title,
+        description: body.description?.trim() || null,
+        podcast_id: body.podcast_id || null,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating episode:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ episode: updatedEpisode });
+  } catch (error) {
+    console.error('Error updating episode:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -68,12 +181,11 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Get the episode first to retrieve the audio URL
-    const { data: episode } = await supabase
-      .from('episodes')
-      .select('audio_url')
-      .eq('id', id)
-      .single();
+    // Verify ownership before deleting
+    const episode = await getAuthenticatedEpisode(id, user.id);
+    if (!episode) {
+      return NextResponse.json({ error: 'Episode not found' }, { status: 404 });
+    }
 
     // Delete the episode from the database
     const { error } = await supabase
@@ -86,7 +198,7 @@ export async function DELETE(
     }
 
     // Clean up the R2 file if episode had an audio URL
-    if (episode?.audio_url) {
+    if (episode.audio_url) {
       try {
         // Extract the R2 key from the URL
         if (R2_EPISODES_CUSTOM_DOMAIN && episode.audio_url.startsWith(R2_EPISODES_CUSTOM_DOMAIN)) {
@@ -101,6 +213,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Error deleting episode:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
