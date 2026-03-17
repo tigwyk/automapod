@@ -64,6 +64,11 @@ test-results/
 bb0da4fb-*/
 *.jsonl
 .session-log
+.agents/
+.crush/
+
+# Build cache
+*.tsbuildinfo
 
 # Tickets (optional - commit if you want)
 # tickets/
