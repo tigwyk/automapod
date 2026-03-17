@@ -34,15 +34,13 @@ test.describe('Podcast Management', () => {
   test('should display podcasts page with empty state', async ({ page }) => {
     await page.goto('/podcasts');
 
-    // Check heading
-    await expect(page.locator('h1')).toContainText('Podcasts');
+    // Check heading - use getByRole to avoid strict mode violation with nav h1
+    await expect(page.getByRole('heading', { name: 'Podcasts' })).toBeVisible();
 
     // Check empty state message - look for any empty state indicator
     const emptyState = page.locator('text=No podcasts yet').or(
-      page.locator('text=Get started').or(
-        page.locator('text=Create your first podcast').or(
-          page.locator('[data-testid="empty-state"]')
-        )
+      page.locator('text=Create your first podcast').or(
+        page.locator('text=Create Podcast')
       )
     );
 

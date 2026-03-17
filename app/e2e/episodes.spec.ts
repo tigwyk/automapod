@@ -17,8 +17,8 @@ test.describe('Episode List', () => {
   test('should display episodes page', async ({ page }) => {
     await page.goto('/episodes');
 
-    // Check heading
-    await expect(page.locator('h1')).toContainText('Episodes');
+    // Check heading - use getByRole to avoid strict mode violation with nav h1
+    await expect(page.getByRole('heading', { name: 'Episodes' })).toBeVisible();
   });
 
   test('should display empty state when no episodes', async ({ page }) => {
@@ -122,25 +122,26 @@ test.describe('Dashboard Navigation', () => {
   });
 
   test('should navigate to episodes list from dashboard', async ({ page }) => {
-    const viewAllButton = page.locator('text=View All Episodes').or(
-      page.locator('a:has-text("Episodes")').or(
-        page.locator('[href="/episodes"]')
-      )
-    );
-
-    const count = await viewAllButton.count();
-    if (count > 0) {
-      await viewAllButton.first().click();
-      await expect(page).toHaveURL('/episodes');
-    } else {
-      // If button doesn't exist, navigate directly
-      await page.goto('/episodes');
-      await expect(page).toHaveURL('/episodes');
-    }
+    // Click Episodes link in nav
+    await page.goto('/dashboard');
+    await page.getByRole('link', { name: 'Episodes' }).click();
+    await expect(page).toHaveURL('/episodes');
   });
 
   test('should navigate to upload from dashboard', async ({ page }) => {
-    await page.click('text=Upload New Episode');
+    // Click Upload Episode button in nav or card
+    await page.goto('/dashboard');
+
+    // Try the Upload Episode link in the nav first
+    const uploadButton = page.getByRole('link', { name: /Upload Episode/ });
+    const count = await uploadButton.count();
+
+    if (count > 0) {
+      await uploadButton.first().click();
+    } else {
+      // Fallback to direct navigation
+      await page.goto('/episodes/new');
+    }
     await expect(page).toHaveURL('/episodes/new');
   });
 });

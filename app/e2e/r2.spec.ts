@@ -280,8 +280,9 @@ test.describe('R2 Storage Library', () => {
       // Start at dashboard
       await page.goto('/dashboard');
 
-      // Click upload button
-      await page.click('text=Upload New Episode');
+      // Click Upload Episode card or button
+      const uploadButton = page.getByRole('link', { name: /Upload Episode/i });
+      await uploadButton.first().click();
 
       await expect(page).toHaveURL('/episodes/new');
     });

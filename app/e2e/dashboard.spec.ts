@@ -21,45 +21,49 @@ test.describe('Dashboard', () => {
   });
 
   test('should display dashboard with user info', async ({ page }) => {
-    // Check heading
-    await expect(page.locator('h1')).toContainText('AutoMapod');
+    // Check for AutoMapod branding in nav
+    await expect(page.getByRole('link', { name: 'AutoMapod' })).toBeVisible();
 
     // Check for welcome message
     await expect(page.locator('text=Welcome to AutoMapod')).toBeVisible();
+
+    // Check for Sign Out button (user is logged in)
+    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible();
   });
 
-  test('should have navigation buttons', async ({ page }) => {
-    // Check for Create Podcast button (use role to avoid strict mode violation)
-    await expect(page.getByRole('link', { name: 'Create Podcast' })).toBeVisible();
+  test('should have navigation cards', async ({ page }) => {
+    // Check for Create Podcast card
+    await expect(page.getByRole('link', { name: /Create Podcast.*/ })).toBeVisible();
 
-    // Check for Manage Podcasts button
-    await expect(page.getByRole('link', { name: 'Manage Podcasts' })).toBeVisible();
+    // Check for Upload Episode card
+    await expect(page.getByRole('link', { name: /Upload Episode.*/ })).toBeVisible();
 
-    // Check for Upload New Episode button
-    await expect(page.getByRole('link', { name: 'Upload New Episode' })).toBeVisible();
+    // Check for Manage Podcasts card
+    await expect(page.getByRole('link', { name: /Manage Podcasts.*/ })).toBeVisible();
 
-    // Check for View All Episodes button
-    await expect(page.getByRole('link', { name: 'View All Episodes' })).toBeVisible();
+    // Check for View Episodes card
+    await expect(page.getByRole('link', { name: /View Episodes.*/ })).toBeVisible();
   });
 
-  test('should display feature checklist', async ({ page }) => {
-    // Check for Getting Started section
-    await expect(page.locator('text=Getting Started')).toBeVisible();
+  test('should display feature list', async ({ page }) => {
+    // Check for Features section
+    await expect(page.getByRole('heading', { name: 'Features' })).toBeVisible();
 
-    // Check for feature list items
-    await expect(page.locator('text=Create podcasts')).toBeVisible();
-    await expect(page.locator('text=Upload audio')).toBeVisible();
-    await expect(page.locator('text=Auto-transcribe')).toBeVisible();
-    await expect(page.locator('text=Generate RSS feed')).toBeVisible();
+    // Check for feature items
+    await expect(page.getByText('Podcast Management')).toBeVisible();
+    await expect(page.getByText('Audio Upload')).toBeVisible();
+    await expect(page.getByText('AI Transcription')).toBeVisible();
+    await expect(page.getByText('RSS Feeds')).toBeVisible();
   });
 
-  test('should indicate feature status', async ({ page }) => {
-    // Check that completed features have green checkmarks
-    const completedFeatures = page.locator('svg.text-green-500');
-    await expect(completedFeatures).toHaveCount(3); // Create podcasts, Upload audio, Auto-transcribe
+  test('should have navigation in header', async ({ page }) => {
+    // The nav links are hidden on mobile and shown on desktop (md breakpoint)
+    // We verify they work through navigation tests, so here we just check the nav structure exists
 
-    // Check that upcoming features have gray icons
-    const upcomingFeatures = page.locator('svg.text-gray-400');
-    await expect(upcomingFeatures).toHaveCount(1); // Generate RSS feed
+    // Check for AutoMapod branding in nav (always visible)
+    await expect(page.getByRole('link', { name: 'AutoMapod' })).toBeVisible();
+
+    // Check for Sign Out button (always visible)
+    await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible();
   });
 });

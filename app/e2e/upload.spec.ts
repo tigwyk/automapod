@@ -15,11 +15,15 @@ test.describe('Episode Upload', () => {
   });
 
   test('should show upload button on dashboard', async ({ page }) => {
-    await expect(page.locator('text=Upload New Episode')).toBeVisible();
+    // Check for Upload Episode card or button
+    const uploadButton = page.getByRole('link', { name: /Upload Episode/i });
+    await expect(uploadButton).toBeVisible();
   });
 
   test('should navigate to upload page', async ({ page }) => {
-    await page.click('text=Upload New Episode');
+    // Click Upload Episode card or button
+    const uploadButton = page.getByRole('link', { name: /Upload Episode/i });
+    await uploadButton.first().click();
     await expect(page).toHaveURL('/episodes/new');
   });
 
