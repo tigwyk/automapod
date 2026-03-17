@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { deleteFromR2, R2_EPISODES_CUSTOM_DOMAIN } from '@/lib/r2';
 
 export async function GET(
   request: Request,
@@ -66,6 +67,15 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    // Get the episode first to retrieve the audio URL
+    const { data: episode } = await supabase
+      .from('episodes')
+      .select('audio_url')
+      .eq('id', id)
+      .single();
+
+    // Delete the episode from the database
     const { error } = await supabase
       .from('episodes')
       .delete()
@@ -73,6 +83,20 @@ export async function DELETE(
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Clean up the R2 file if episode had an audio URL
+    if (episode?.audio_url) {
+      try {
+        // Extract the R2 key from the URL
+        if (R2_EPISODES_CUSTOM_DOMAIN && episode.audio_url.startsWith(R2_EPISODES_CUSTOM_DOMAIN)) {
+          const key = episode.audio_url.replace(R2_EPISODES_CUSTOM_DOMAIN, '').replace(/^\//, '');
+          await deleteFromR2(key);
+        }
+      } catch (r2Error) {
+        // Log R2 cleanup error but don't fail the delete operation
+        console.error('Failed to delete R2 file:', r2Error);
+      }
     }
 
     return NextResponse.json({ success: true });

@@ -171,3 +171,4 @@ export function isValidFileSize(file: File, maxSizeMB: number = 500): boolean {
 
 // Re-export constants for backward compatibility
 export const R2_EPISODES_BUCKET = R2_CONFIG.bucketName;
+export const R2_EPISODES_CUSTOM_DOMAIN = R2_CONFIG.publicUrl;
