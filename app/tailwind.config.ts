@@ -9,6 +9,7 @@ export default {
     extend: {
       colors: {
         primary: {
+          DEFAULT: '#0d9488', // Brand color
           50: '#f0fdfa',
           100: '#ccfbf1',
           200: '#99f6e4',
@@ -22,6 +23,7 @@ export default {
           950: '#042f2e',
         },
         secondary: {
+          DEFAULT: '#0f172a', // Deep slate
           50: '#f8fafc',
           100: '#f1f5f9',
           200: '#e2e8f0',
@@ -31,7 +33,7 @@ export default {
           600: '#475569',
           700: '#334155',
           800: '#1e293b',
-          900: '#0f172a', // Deep slate
+          900: '#0f172a',
           950: '#020617',
         },
         accent: {
@@ -48,7 +50,7 @@ export default {
           900: '#881337',
         },
         success: {
-          DEFAULT: '#10b981', // emerald-500
+          DEFAULT: '#10b981',
           50: '#ecfdf5',
           100: '#d1fae5',
           200: '#a7f3d0',
@@ -73,14 +75,14 @@ export default {
           800: '#92400e',
           900: '#78350f',
         },
-        border: 'hsl(var(--color-border))',
-        background: 'hsl(var(--color-background))',
-        foreground: 'hsl(var(--color-foreground))',
+        border: 'rgb(var(--color-border) / <alpha-value>)',
+        background: 'rgb(var(--color-background) / <alpha-value>)',
+        foreground: 'rgb(var(--color-foreground) / <alpha-value>)',
         muted: {
-          DEFAULT: 'hsl(var(--color-muted))',
-          foreground: 'hsl(var(--color-muted-foreground))',
+          DEFAULT: 'rgb(var(--color-muted) / <alpha-value>)',
+          foreground: 'rgb(var(--color-muted-foreground) / <alpha-value>)',
         },
-        ring: 'hsl(var(--color-ring))',
+        ring: 'rgb(var(--color-ring) / <alpha-value>)',
       },
       fontFamily: {
         sans: [
