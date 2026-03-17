@@ -159,11 +159,9 @@ test.describe('Episode Edit', () => {
     await episodeLink.first().click();
     await page.waitForLoadState('networkidle');
 
-    // Get current URL with episode ID and navigate to edit page
-    const currentUrl = page.url();
-
-    // Navigate to edit page
-    await page.goto(`${currentUrl}/edit`);
+    // Click edit button to navigate to edit page
+    const editButton = page.locator('a:has-text("Edit Episode")');
+    await editButton.click();
     await page.waitForLoadState('networkidle');
 
     // Check form is pre-populated
@@ -217,11 +215,9 @@ test.describe('Episode Edit', () => {
     await episodeLink.first().click();
     await page.waitForLoadState('networkidle');
 
-    // Get current URL with episode ID and navigate to edit page
-    const currentUrl = page.url();
-
-    // Go to edit page
-    await page.goto(`${currentUrl}/edit`);
+    // Click edit button to navigate to edit page
+    const editButton = page.locator('a:has-text("Edit Episode")');
+    await editButton.click();
     await page.waitForLoadState('networkidle');
 
     // Update title
@@ -285,11 +281,9 @@ test.describe('Episode Edit', () => {
     await episodeLink.first().click();
     await page.waitForLoadState('networkidle');
 
-    // Get current URL with episode ID and navigate to edit page
-    const currentUrl = page.url();
-
-    // Go to edit page
-    await page.goto(`${currentUrl}/edit`);
+    // Click edit button to navigate to edit page
+    const editButton = page.locator('a:has-text("Edit Episode")');
+    await editButton.click();
     await page.waitForLoadState('networkidle');
 
     // Click cancel
@@ -342,11 +336,9 @@ test.describe('Episode Edit', () => {
     await episodeLink.first().click();
     await page.waitForLoadState('networkidle');
 
-    // Get current URL with episode ID and navigate to edit page
-    const currentUrl = page.url();
-
-    // Go to edit page
-    await page.goto(`${currentUrl}/edit`);
+    // Click edit button to navigate to edit page
+    const editButton = page.locator('a:has-text("Edit Episode")');
+    await editButton.click();
     await page.waitForLoadState('networkidle');
 
     // Clear title

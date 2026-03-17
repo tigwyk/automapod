@@ -26,18 +26,9 @@ async function getEpisode(id: string) {
 
   const { data: episode } = await supabase
     .from('episodes')
-    .select('*, podcasts(user_id)')
+    .select('*')
     .eq('id', id)
     .single();
-
-  if (!episode) {
-    return null;
-  }
-
-  // Check if user owns this episode's podcast
-  if (episode.podcasts?.user_id !== user.id) {
-    return null;
-  }
 
   return episode;
 }
@@ -94,16 +85,12 @@ async function updateEpisode(id: string, formData: FormData) {
     throw new Error('Title is required');
   }
 
-  if (!podcastId) {
-    throw new Error('Podcast is required');
-  }
-
   const { error } = await supabase
     .from('episodes')
     .update({
       title: title.trim(),
       description: description?.trim() || null,
-      podcast_id: podcastId,
+      podcast_id: podcastId || null,
     })
     .eq('id', id);
 
@@ -169,15 +156,15 @@ export default async function EditEpisodePage({
 
         <div>
           <label htmlFor="podcast_id" className="block text-sm font-medium text-gray-700">
-            Podcast <span className="text-red-500">*</span>
+            Podcast
           </label>
           <select
             id="podcast_id"
             name="podcast_id"
-            required
-            defaultValue={episode.podcast_id}
+            defaultValue={episode.podcast_id || ''}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
           >
+            <option value="">No podcast (standalone episode)</option>
             {podcasts.map((podcast) => (
               <option key={podcast.id} value={podcast.id}>
                 {podcast.title}
@@ -185,7 +172,7 @@ export default async function EditEpisodePage({
             ))}
           </select>
           <p className="mt-1 text-sm text-gray-500">
-            Choose which podcast this episode belongs to.
+            Optional. Choose which podcast this episode belongs to.
           </p>
         </div>
 
