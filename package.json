@@ -3,5 +3,9 @@
     "autoprefixer": "^10.4.27",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1"
+  },
+  "dependencies": {
+    "eslint-config-next": "^15.5.13",
+    "next": "^15.5.13"
   }
 }
