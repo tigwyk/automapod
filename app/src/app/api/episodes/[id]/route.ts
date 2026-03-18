@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 import { deleteFromR2, R2_EPISODES_CUSTOM_DOMAIN } from '@/lib/r2';
 
 /**
@@ -10,20 +9,11 @@ import { deleteFromR2, R2_EPISODES_CUSTOM_DOMAIN } from '@/lib/r2';
  * 2. episode.podcast_id belongs to a podcast the user owns
  * Returns the episode if owned, null otherwise.
  */
-async function getAuthenticatedEpisode(id: string, userId: string) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
-
+async function getAuthenticatedEpisode(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  id: string,
+  userId: string
+) {
   // Get episode - use a simple query
   const { data: episode } = await supabase
     .from('episodes')
@@ -62,18 +52,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-        },
-      }
-    );
+    const supabase = await createClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -81,7 +60,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const episode = await getAuthenticatedEpisode(id, user.id);
+    const episode = await getAuthenticatedEpisode(supabase, id, user.id);
 
     if (!episode) {
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 });
@@ -99,18 +78,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-        },
-      }
-    );
+    const supabase = await createClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -121,7 +89,7 @@ export async function PATCH(
     const body = await request.json();
 
     // Verify ownership before updating
-    const episode = await getAuthenticatedEpisode(id, user.id);
+    const episode = await getAuthenticatedEpisode(supabase, id, user.id);
     if (!episode) {
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 });
     }
@@ -161,18 +129,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-        },
-      }
-    );
+    const supabase = await createClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -182,7 +139,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Verify ownership before deleting
-    const episode = await getAuthenticatedEpisode(id, user.id);
+    const episode = await getAuthenticatedEpisode(supabase, id, user.id);
     if (!episode) {
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 });
     }

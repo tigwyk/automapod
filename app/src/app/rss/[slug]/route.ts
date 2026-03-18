@@ -1,6 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createPublicClient } from '@/lib/supabase/public';
 
 export async function GET(
   request: NextRequest,
@@ -9,19 +8,8 @@ export async function GET(
   try {
     const { slug } = await params;
 
-    // Create Supabase client
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-        },
-      }
-    );
+    // Create public Supabase client (no cookies - public feed must not emit Set-Cookie)
+    const supabase = createPublicClient();
 
     // Fetch podcast by slug (no auth required - public feed)
     const { data: podcast, error: podcastError } = await supabase

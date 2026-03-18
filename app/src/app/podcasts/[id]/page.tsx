@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { PodcastForm } from '@/components/podcast-form';
-import DeletePodcastButton from '@/components/delete-podcast-button';
+import { DeletePodcastButton } from '@/components/delete-podcast-button';
 
 export const dynamic = 'force-dynamic';
 
