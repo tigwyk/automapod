@@ -20,12 +20,12 @@ type Platform = 'ios' | 'android' | 'web' | 'other';
  *
  * Download tracking endpoint for podcast analytics.
  *
- * Always returns 1x1 GIF for tracking pixel compatibility.
+ * Redirects to the actual audio file after tracking.
  * Never returns errors - tracking should be silent and not break RSS readers.
  *
  * Query params:
  * - episodeId: UUID of the episode (optional)
- * - pixel: Set to "1" to indicate pixel mode (always returns GIF)
+ * - pixel: Set to "1" to return 1x1 GIF instead of redirect (for pixel tracking in HTML)
  *
  * Privacy features:
  * - IP addresses are hashed (SHA-256) before storage
@@ -35,8 +35,9 @@ type Platform = 'ios' | 'android' | 'web' | 'other';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const episodeId = searchParams.get('episodeId');
+  const pixelMode = searchParams.get('pixel') === '1';
 
-  // Helper function to return pixel GIF
+  // Helper function to return pixel GIF (for pixel tracking mode)
   const returnPixelGif = () => new NextResponse(PIXEL_GIF, {
     status: 200,
     headers: {
@@ -60,8 +61,8 @@ export async function GET(request: NextRequest) {
     .single();
 
   if (episodeError || !episode || !episode.audio_url) {
-    // Episode not found - return GIF silently (don't break RSS readers)
-    return returnPixelGif();
+    // Episode not found - return GIF in pixel mode, otherwise 404
+    return pixelMode ? returnPixelGif() : new NextResponse('Episode not found', { status: 404 });
   }
 
   // Get client IP (check multiple headers for different deployments)
@@ -98,8 +99,13 @@ export async function GET(request: NextRequest) {
     }
   })();
 
-  // Always return GIF for tracking pixel
-  return returnPixelGif();
+  // Return GIF in pixel mode, otherwise redirect to actual audio
+  if (pixelMode) {
+    return returnPixelGif();
+  }
+
+  // Redirect to the actual audio file (301 for permanent redirect)
+  return NextResponse.redirect(episode.audio_url, 301);
 }
 
 /**

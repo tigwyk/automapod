@@ -88,6 +88,7 @@ function generateRSSFeed(podcast: any, episodes: any[], requestUrl: string): str
     const duration = episode.duration_seconds ? formatDuration(episode.duration_seconds) : '0:00:00';
 
     // Use tracking URL for enclosure - points to our tracking endpoint which redirects to R2
+    // The endpoint tracks the download, then redirects to the actual audio file
     const trackedAudioUrl = episode.audio_url ?
       `${baseUrl}/api/track/download?episodeId=${episode.id}` : null;
 
