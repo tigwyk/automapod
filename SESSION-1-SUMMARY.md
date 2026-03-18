@@ -1,8 +1,8 @@
-# AutoMapod CompanyOS - Session 1 Summary
+# AutomaPod CompanyOS - Session 1 Summary
 
 ## What We Accomplished
 
-You now have a **functional CompanyOS setup** adapted from Brad Feld's configuration guide, customized for AutoMapod.
+You now have a **functional CompanyOS setup** adapted from Brad Feld's configuration guide, customized for AutomaPod.
 
 ### ✅ Completed Setup
 
@@ -20,7 +20,7 @@ You now have a **functional CompanyOS setup** adapted from Brad Feld's configura
 │   ├── evidence-first.md
 │   ├── scope-intent.md
 │   └── code-quality.md
-├── skills/             # AutoMapod skills
+├── skills/             # AutomaPod skills
 │   ├── amp-ops/        # Company operations
 │   ├── amp-comms/      # Communications
 │   └── amp-secrets/    # Secrets management
@@ -52,7 +52,7 @@ You now have a **functional CompanyOS setup** adapted from Brad Feld's configura
 - **amp-secrets**: API keys and credential management
 
 #### 5. Workflow Commands
-- **/amp-help**: List all AutoMapod capabilities
+- **/amp-help**: List all AutomaPod capabilities
 - **/amp-plan**: Build prioritized daily plan
 - **/amp-recap**: Log session accomplishments
 
@@ -106,7 +106,7 @@ No secrets in git, all access logged, principle of least privilege.
 ### Simplified for Solo Founder
 - No Linear integration (yet)
 - No multi-company complexity
-- Focused on one business (AutoMapod)
+- Focused on one business (AutomaPod)
 - Fewer automated jobs to start
 
 ### Podcast-Specific Skills
@@ -165,13 +165,13 @@ Before the next session, think about:
 
 1. **Tech Stack**: What are you most comfortable with? (Next.js, Remix, SvelteKit? Supabase, Neon, PlanetScale?)
 
-2. **MVP Features**: What's the ONE core feature AutoMapod must have first?
+2. **MVP Features**: What's the ONE core feature AutomaPod must have first?
    - Audio upload?
    - RSS feed generation?
    - Episode management?
    - Something else?
 
-3. **Differentiation**: What makes AutoMapod different from:
+3. **Differentiation**: What makes AutomaPod different from:
    - Buzzsprout
    - Transistor
    - Anchor/Spotify for Podcasters
@@ -195,6 +195,6 @@ Before the next session, think about:
 
 ---
 
-*Great progress! You now have a solid foundation for building AutoMapod with structure and discipline.*
+*Great progress! You now have a solid foundation for building AutomaPod with structure and discipline.*
 
 **Last updated**: 2026-03-10

@@ -1,4 +1,4 @@
-# AutoMapod Session 5 Recap
+# AutomaPod Session 5 Recap
 
 **Date**: 2026-03-15
 **Duration**: ~2 hours

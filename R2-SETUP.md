@@ -1,4 +1,4 @@
-# Cloudflare R2 Setup Guide for AutoMapod
+# Cloudflare R2 Setup Guide for AutomaPod
 
 This guide walks you through setting up Cloudflare R2 for persistent audio file storage.
 
@@ -8,7 +8,7 @@ This guide walks you through setting up Cloudflare R2 for persistent audio file 
 
 Before starting, make sure you have:
 - [ ] Cloudflare account (free tier is sufficient)
-- [ ] AutoMapod repository cloned locally
+- [ ] AutomaPod repository cloned locally
 - [ ] Node.js and npm installed
 
 ---
@@ -105,7 +105,7 @@ Repeat for `images.automapod.com` if desired.
 
 Configure:
 ```
-Token name: AutoMapod R2 Access
+Token name: AutomaPod R2 Access
 Permissions: Admin read & write
 ```
 
@@ -282,7 +282,7 @@ After R2 is configured:
 
 - **Cloudflare R2 Docs**: https://developers.cloudflare.com/r2/
 - **AWS S3 SDK Docs**: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/
-- **AutoMapod GitHub**: https://github.com/tigwyk/automapod
+- **AutomaPod GitHub**: https://github.com/tigwyk/automapod
 
 ---
 

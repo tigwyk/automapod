@@ -13,11 +13,11 @@ workflow:
     deploy_hint: "Merge PR and Vercel will auto-deploy"
 ---
 
-# AutoMapod Business - Claude Context
+# AutomaPod Business - Claude Context
 
 ## Project Overview
 
-AutoMapod is an all-in-one podcast hosting suite built as a technical solo venture using CompanyOS principles for structured, disciplined development.
+AutomaPod is an all-in-one podcast hosting suite built as a technical solo venture using CompanyOS principles for structured, disciplined development.
 
 **Location**: `/Users/leeingram/development/projects/automapod-business`
 
@@ -113,7 +113,7 @@ This project uses CompanyOS skills for business operations:
 ## Key Conventions
 
 ### Naming
-- Use `amp-` prefix for AutoMapod-specific skills
+- Use `amp-` prefix for AutomaPod-specific skills
 - Branch names: `feature/AMP-XXX-description`
 - Commit format: Conventional commits
 

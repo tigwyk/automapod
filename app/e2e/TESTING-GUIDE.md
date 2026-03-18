@@ -1,8 +1,8 @@
-# E2E Testing Guide - AutoMapod
+# E2E Testing Guide - AutomaPod
 
 ## Overview
 
-This guide explains how to run, write, and maintain E2E tests for AutoMapod using Playwright.
+This guide explains how to run, write, and maintain E2E tests for AutomaPod using Playwright.
 
 ## Test Prerequisites
 
@@ -428,7 +428,7 @@ Tests run automatically on:
 
 - [Playwright Documentation](https://playwright.dev/)
 - [Playwright Best Practices](https://playwright.dev/docs/best-practices)
-- [AutoMapod CLAUDE.md](../CLAUDE.md)
+- [AutomaPod CLAUDE.md](../CLAUDE.md)
 - [Testing Playwright Reference](~/.claude/docs/testing-playwright.md)
 
 ## Questions?

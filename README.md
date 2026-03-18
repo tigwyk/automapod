@@ -1,10 +1,10 @@
-# AutoMapod Business
+# AutomaPod Business
 
 All-in-one podcast hosting suite built with CompanyOS principles for structured, disciplined solo development.
 
 ## 🎯 Vision
 
-AutoMapod provides podcasters with everything they need to host, transcribe, distribute, and monetize their podcasts - all in one platform.
+AutomaPod provides podcasters with everything they need to host, transcribe, distribute, and monetize their podcasts - all in one platform.
 
 ## 📁 Project Structure
 

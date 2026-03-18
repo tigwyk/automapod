@@ -1,4 +1,4 @@
-# AutoMapod Session Recap - Session 3
+# AutomaPod Session Recap - Session 3
 
 ## Date
 2026-03-10

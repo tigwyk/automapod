@@ -1,4 +1,4 @@
-# AutoMapod Audit Report
+# AutomaPod Audit Report
 
 **Date**: 2026-03-10
 **Type**: Initial Setup Audit (Complete)
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-CompanyOS setup for AutoMapod is complete and healthy. All core components are in place, configuration is correct, and security best practices are being followed. A few items need attention for full production readiness.
+CompanyOS setup for AutomaPod is complete and healthy. All core components are in place, configuration is correct, and security best practices are being followed. A few items need attention for full production readiness.
 
 ---
 
@@ -28,7 +28,7 @@ CompanyOS setup for AutoMapod is complete and healthy. All core components are i
 **Total**: 9/9 business operations skills complete
 
 ### Commands
-- ✅ /amp-help - Lists all AutoMapod capabilities
+- ✅ /amp-help - Lists all AutomaPod capabilities
 - ✅ /amp-plan - Build prioritized daily plan
 - ✅ /amp-recap - Log session accomplishments
 

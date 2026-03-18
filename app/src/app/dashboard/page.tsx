@@ -37,7 +37,7 @@ export default async function DashboardPage() {
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                   </svg>
                 </div>
-                <h1 className="text-xl font-bold text-foreground">AutoMapod</h1>
+                <h1 className="text-xl font-bold text-foreground">AutomaPod</h1>
               </Link>
               <div className="hidden md:flex items-center gap-6">
                 <Link href="/dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Dashboard</Link>
@@ -70,7 +70,7 @@ export default async function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground">Welcome to AutoMapod</h2>
+                <h2 className="text-2xl font-bold text-foreground">Welcome to AutomaPod</h2>
                 <p className="text-muted-foreground">Your podcast hosting suite</p>
               </div>
             </div>
