@@ -1,4 +1,4 @@
-# AutoMapod Architecture
+# AutomaPod Architecture
 
 **Last updated**: 2026-03-10
 **Status**: Tech stack locked, MVP planning in progress

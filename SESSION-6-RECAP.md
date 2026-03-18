@@ -1,4 +1,4 @@
-# AutoMapod Session Recap
+# AutomaPod Session Recap
 
 **Date**: 2026-03-15
 **Focus**: Git Structure Fix, Complete E2E Tests, RSS Feed Generation
@@ -200,7 +200,7 @@ automapod-business/
 │   ├── playwright.config.ts
 │   └── tsconfig.json
 ├── companyos/             # CompanyOS skills (not a submodule)
-└── config/                # AutoMapod config (not a submodule)
+└── config/                # AutomaPod config (not a submodule)
 ```
 
 ---

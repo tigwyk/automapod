@@ -2,7 +2,7 @@
 
 ## ✅ Setup Summary
 
-AutoMapod Business is now properly configured as a git monorepo with submodules.
+AutomaPod Business is now properly configured as a git monorepo with submodules.
 
 ## 📁 Repository Structure
 
@@ -32,7 +32,7 @@ automapod-business/           # Main repository (this repo)
 #### `app/` - Next.js Application
 - **Repository**: Independent git repo
 - **Branch**: `main`
-- **Purpose**: Main AutoMapod web application
+- **Purpose**: Main AutomaPod web application
 - **Tech Stack**: Next.js 15, Supabase, Groq, Tailwind
 - **Status**: Fully functional with auth, upload, transcription, episode management
 - **Tests**: 42 E2E tests passing
@@ -84,7 +84,7 @@ git commit -m "chore: update app submodule"
 ## 📋 Commit History
 
 ### Main Repository
-1. `87c47fe` - feat: initialize AutoMapod business monorepo
+1. `87c47fe` - feat: initialize AutomaPod business monorepo
 2. `c5037a1` - feat: add app, companyos, and config as git submodules
 
 ### App Submodule

@@ -1,8 +1,8 @@
-# AutoMapod Business - CompanyOS Implementation Plan
+# AutomaPod Business - CompanyOS Implementation Plan
 
 ## Vision
 
-AutoMapod is an all-in-one podcast suite covering hosting, production, analytics, and monetization. Built as a technical solo venture using CompanyOS principles for structured, disciplined development.
+AutomaPod is an all-in-one podcast suite covering hosting, production, analytics, and monetization. Built as a technical solo venture using CompanyOS principles for structured, disciplined development.
 
 ---
 
@@ -54,7 +54,7 @@ AutoMapod is an all-in-one podcast suite covering hosting, production, analytics
 - [x] `/start` - Feature planning and branch creation
 - [x] `/commit` - Auto-triage review + push
 - [x] `/amp-commit` - CompanyOS-specific commit (PRs for core, direct for config)
-- [x] `/amp-help` - List all AutoMapod capabilities
+- [x] `/amp-help` - List all AutomaPod capabilities
 - [x] `/amp-plan` - Build prioritized daily plan
 - [x] `/amp-recap` - Log session accomplishments
 
@@ -250,7 +250,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 
 ### Comparison with Brad Feld's Configuration Guide
 
-| Component | Feld's Guide | AutoMapod | Status |
+| Component | Feld's Guide | AutomaPod | Status |
 |-----------|--------------|-----------|--------|
 | **Hooks** | 10 hooks | 10 hooks | ✅ Complete |
 | **Docs** | 13 docs | 13 docs | ✅ Complete |

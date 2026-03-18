@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'AutoMapod - Podcast Hosting Suite',
+  title: 'AutomaPod - Podcast Hosting Suite',
   description: 'All-in-one podcast hosting, production, analytics, and monetization',
 };
 

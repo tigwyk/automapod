@@ -21,11 +21,11 @@ test.describe('Dashboard', () => {
   });
 
   test('should display dashboard with user info', async ({ page }) => {
-    // Check for AutoMapod branding in nav
-    await expect(page.getByRole('link', { name: 'AutoMapod' })).toBeVisible();
+    // Check for AutomaPod branding in nav
+    await expect(page.getByRole('link', { name: 'AutomaPod' })).toBeVisible();
 
     // Check for welcome message
-    await expect(page.locator('text=Welcome to AutoMapod')).toBeVisible();
+    await expect(page.locator('text=Welcome to AutomaPod')).toBeVisible();
 
     // Check for Sign Out button (user is logged in)
     await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible();
@@ -60,8 +60,8 @@ test.describe('Dashboard', () => {
     // The nav links are hidden on mobile and shown on desktop (md breakpoint)
     // We verify they work through navigation tests, so here we just check the nav structure exists
 
-    // Check for AutoMapod branding in nav (always visible)
-    await expect(page.getByRole('link', { name: 'AutoMapod' })).toBeVisible();
+    // Check for AutomaPod branding in nav (always visible)
+    await expect(page.getByRole('link', { name: 'AutomaPod' })).toBeVisible();
 
     // Check for Sign Out button (always visible)
     await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible();

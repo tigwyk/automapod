@@ -6,7 +6,7 @@
 
 ## Description
 
-Implement Supabase authentication for AutoMapod. Users should be able to sign up, log in, and access protected dashboard routes.
+Implement Supabase authentication for AutomaPod. Users should be able to sign up, log in, and access protected dashboard routes.
 
 ## Scope
 

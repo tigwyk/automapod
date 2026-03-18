@@ -6,7 +6,7 @@
 
 ## Description
 
-Fix critical security issues in the E2E test suite where hardcoded credentials are exposed in source code, violating AutoMapod's security principles and amp-secrets guidelines.
+Fix critical security issues in the E2E test suite where hardcoded credentials are exposed in source code, violating AutomaPod's security principles and amp-secrets guidelines.
 
 ## Issues Found
 

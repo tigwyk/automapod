@@ -6,7 +6,7 @@
 
 ## Description
 
-Initialize the AutoMapod application using Next.js 15 with TypeScript, Tailwind CSS, and Supabase integration.
+Initialize the AutomaPod application using Next.js 15 with TypeScript, Tailwind CSS, and Supabase integration.
 
 ## Scope
 
