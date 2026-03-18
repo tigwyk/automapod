@@ -3,10 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { deleteFromR2, R2_EPISODES_CUSTOM_DOMAIN } from '@/lib/r2';
 
 /**
- * Verifies that the user owns the episode.
- * Ownership is determined by either:
- * 1. episode.user_id matches the user (for standalone episodes)
- * 2. episode.podcast_id belongs to a podcast the user owns
+ * Verifies that the user owns the episode via its podcast.
+ * All episodes must belong to a podcast (no standalone episodes).
  * Returns the episode if owned, null otherwise.
  */
 async function getAuthenticatedEpisode(
@@ -21,26 +19,18 @@ async function getAuthenticatedEpisode(
     .eq('id', id)
     .single();
 
-  if (!episode) {
+  if (!episode || !episode.podcast_id) {
     return null;
   }
 
-  // Verify ownership: user must own the episode directly OR through its podcast
-  const ownsDirectly = episode.user_id === userId;
+  // Verify ownership through the podcast
+  const { data: podcast } = await supabase
+    .from('podcasts')
+    .select('user_id')
+    .eq('id', episode.podcast_id)
+    .single();
 
-  let ownsViaPodcast = false;
-  if (!ownsDirectly && episode.podcast_id) {
-    // Check if the podcast belongs to the user
-    const { data: podcast } = await supabase
-      .from('podcasts')
-      .select('user_id')
-      .eq('id', episode.podcast_id)
-      .single();
-
-    ownsViaPodcast = podcast?.user_id === userId;
-  }
-
-  if (!ownsDirectly && !ownsViaPodcast) {
+  if (podcast?.user_id !== userId) {
     return null;
   }
 
@@ -100,13 +90,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
-    // Update the episode
+    // Update the episode (podcast_id is immutable - episodes always belong to their original podcast)
     const { data: updatedEpisode, error } = await supabase
       .from('episodes')
       .update({
         title,
         description: body.description?.trim() || null,
-        podcast_id: body.podcast_id || null,
       })
       .eq('id', id)
       .select()
