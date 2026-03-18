@@ -14,34 +14,57 @@ test.describe('Episode List', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
   });
 
-  test('should display episodes page', async ({ page }) => {
-    await page.goto('/episodes');
+  test('should display episodes page within podcast context', async ({ page }) => {
+    // First, create a test podcast
+    await page.goto('/podcasts/new');
 
-    // Check heading - use getByRole to avoid strict mode violation with nav h1
-    await expect(page.getByRole('heading', { name: 'Episodes' })).toBeVisible();
+    await page.fill('input[name="title"]', 'Test Podcast for Episodes');
+    await page.fill('input[name="rss_slug"]', 'test-episodes-podcast');
+    await page.fill('textarea[name="description"]', 'A test podcast for episode testing');
+
+    await page.click('button[type="submit"]');
+
+    // Wait for redirect to podcast detail page
+    await page.waitForURL(/\/podcasts\/[a-f0-9-]+$/, { timeout: 10000 });
+
+    // Get the podcast ID from the URL
+    const url = page.url();
+    const podcastId = url.split('/').pop();
+
+    // Navigate to the episodes page for this podcast
+    await page.goto(`/podcasts/${podcastId}/episodes`);
+
+    // Check heading
+    await expect(page.getByRole('heading', { name: /Test Podcast for Episodes - Episodes/ })).toBeVisible();
   });
 
   test('should display empty state when no episodes', async ({ page }) => {
-    await page.goto('/episodes');
+    // First, create a test podcast
+    await page.goto('/podcasts/new');
 
-    // Check for empty state - look for common empty state patterns
-    const emptyState = page.locator('text=No episodes yet').or(
-      page.locator('text=Upload your first episode').or(
-        page.locator('[data-testid="empty-state"]').or(
-          page.locator('text=empty', { exact: false })
-        )
-      )
-    );
+    await page.fill('input[name="title"]', 'Empty Test Podcast');
+    await page.fill('input[name="rss_slug"]', `empty-test-${Date.now()}`);
+    await page.fill('textarea[name="description"]', 'Empty test podcast');
 
-    // Empty state might or might not be visible depending on existing episodes
-    const emptyStateCount = await emptyState.count();
-    if (emptyStateCount > 0) {
-      await expect(emptyState.first()).toBeVisible();
-    }
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/podcasts\/[a-f0-9-]+$/, { timeout: 10000 });
+
+    // Get the podcast ID from the URL
+    const url = page.url();
+    const podcastId = url.split('/').pop();
+
+    // Navigate to the episodes page
+    await page.goto(`/podcasts/${podcastId}/episodes`);
+
+    // Check for empty state
+    const emptyState = page.locator('text=No episodes yet');
+
+    // Empty state should be visible for new podcast
+    await expect(emptyState).toBeVisible();
   });
 });
 
-test.describe('Episode Detail', () => {
+test.describe('Episode Upload in Podcast Context', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
 
@@ -54,57 +77,56 @@ test.describe('Episode Detail', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
   });
 
-  test('should show episode detail page', async ({ page }) => {
-    // This test assumes an episode exists. In a real test, you'd create one first.
-    // For now, we'll just test navigation to a dummy UUID
-    await page.goto('/episodes/00000000-0000-0000-0000-000000000000');
+  test('should navigate to upload page from podcast episodes', async ({ page }) => {
+    // First, create a test podcast
+    await page.goto('/podcasts/new');
 
-    // Should show not found or redirect (since episode doesn't exist)
-    // The exact behavior depends on your implementation
-    const currentUrl = page.url();
-    expect(currentUrl).toContain('/episodes');
-  });
+    await page.fill('input[name="title"]', 'Upload Test Podcast');
+    await page.fill('input[name="rss_slug"]', `upload-test-${Date.now()}`);
+    await page.fill('textarea[name="description"]', 'Test podcast for upload');
 
-  test('should have delete button on episode detail', async ({ page }) => {
-    await page.goto('/episodes/00000000-0000-0000-0000-000000000000');
-
-    // Check for delete button (if page loads)
-    const deleteButton = page.locator('text=Delete').or(page.locator('button:has-text("Delete")'));
-
-    // This might not be visible if episode doesn't exist, so we just check the element exists
-    expect(await deleteButton.count()).toBeGreaterThanOrEqual(0);
-  });
-});
-
-test.describe('Episode Deletion', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-
-    // Get test credentials (fails fast if missing)
-    const { email, password } = getTestCredentials();
-
-    await page.fill('input[type="email"]', email);
-    await page.fill('input[type="password"]', password);
     await page.click('button[type="submit"]');
-    await page.waitForURL('/dashboard', { timeout: 10000 });
+    await page.waitForURL(/\/podcasts\/[a-f0-9-]+$/, { timeout: 10000 });
+
+    // Get the podcast ID from the URL
+    const url = page.url();
+    const podcastId = url.split('/').pop();
+
+    // Navigate to episodes page
+    await page.goto(`/podcasts/${podcastId}/episodes`);
+
+    // Click "Upload Episode" button
+    await page.getByRole('link', { name: /Upload Episode/ }).click();
+
+    // Should be on the upload page
+    await expect(page).toHaveURL(/\/podcasts\/[a-f0-9-]+\/episodes\/new/);
+
+    // Check that the podcast title is shown
+    await expect(page.getByText(/Add a new episode to Upload Test Podcast/)).toBeVisible();
   });
 
-  test('should cancel deletion', async ({ page }) => {
-    await page.goto('/episodes/00000000-0000-0000-0000-000000000000');
+  test('should show podcast-scoped navigation', async ({ page }) => {
+    // First, create a test podcast
+    await page.goto('/podcasts/new');
 
-    // Try to click delete button if it exists
-    const deleteButton = page.locator('text=Delete').or(page.locator('button:has-text("Delete")'));
-    const count = await deleteButton.count();
+    await page.fill('input[name="title"]', 'Nav Test Podcast');
+    await page.fill('input[name="rss_slug"]', `nav-test-${Date.now()}`);
+    await page.fill('textarea[name="description"]', 'Test podcast for navigation');
 
-    if (count > 0) {
-      await deleteButton.first().click();
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/podcasts\/[a-f0-9-]+$/, { timeout: 10000 });
 
-      // Cancel deletion
-      await page.keyboard.press('Escape');
+    // Get the podcast ID from the URL
+    const url = page.url();
+    const podcastId = url.split('/').pop();
 
-      // Should stay on detail page
-      await expect(page).toHaveURL(/\/episodes\/.+/);
-    }
+    // Navigate to episodes page
+    await page.goto(`/podcasts/${podcastId}/episodes`);
+
+    // Check breadcrumb navigation
+    await expect(page.getByRole('link', { name: 'All Podcasts' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Nav Test Podcast' })).toBeVisible();
+    await expect(page.getByText('Episodes', { exact: true })).toBeVisible();
   });
 });
 
@@ -121,27 +143,44 @@ test.describe('Dashboard Navigation', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
   });
 
-  test('should navigate to episodes list from dashboard', async ({ page }) => {
-    // Click Episodes link in nav
+  test('should navigate to podcasts from dashboard (not episodes directly)', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.getByRole('link', { name: 'Episodes' }).click();
-    await expect(page).toHaveURL('/episodes');
+
+    // Check that "Podcasts" link exists
+    await expect(page.getByRole('link', { name: 'Podcasts' })).toBeVisible();
+
+    // Click on Podcasts
+    await page.getByRole('link', { name: 'Podcasts' }).click();
+    await expect(page).toHaveURL('/podcasts');
   });
 
-  test('should navigate to upload from dashboard', async ({ page }) => {
-    // Click Upload Episode button in nav or card
+  test('should not have direct Episodes link in dashboard nav', async ({ page }) => {
     await page.goto('/dashboard');
 
-    // Try the Upload Episode link in the nav first
-    const uploadButton = page.getByRole('link', { name: /Upload Episode/ });
-    const count = await uploadButton.count();
+    // Check that "Episodes" link does NOT exist in nav
+    const episodesLink = page.getByRole('navigation').getByRole('link', { name: 'Episodes' });
+    await expect(episodesLink).not.toBeVisible();
+  });
 
-    if (count > 0) {
-      await uploadButton.first().click();
-    } else {
-      // Fallback to direct navigation
-      await page.goto('/episodes/new');
-    }
-    await expect(page).toHaveURL('/episodes/new');
+  test('should navigate to podcasts page and then to episodes', async ({ page }) => {
+    await page.goto('/dashboard');
+
+    // Click on "Manage Podcasts"
+    await page.getByRole('link', { name: 'Manage Podcasts' }).click();
+    await expect(page).toHaveURL('/podcasts');
+
+    // Create a test podcast
+    await page.getByRole('link', { name: 'Create Podcast' }).click();
+    await expect(page).toHaveURL('/podcasts/new');
+
+    await page.fill('input[name="title"]', 'Dashboard Test Podcast');
+    await page.fill('input[name="rss_slug"]', `dashboard-test-${Date.now()}`);
+    await page.fill('textarea[name="description"]', 'Test from dashboard');
+
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/podcasts\/[a-f0-9-]+$/, { timeout: 10000 });
+
+    // Now on podcast detail page, check for "View Episodes" button
+    await expect(page.getByRole('link', { name: /View Episodes/ })).toBeVisible();
   });
 });

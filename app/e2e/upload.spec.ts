@@ -1,6 +1,23 @@
 import { test, expect } from '@playwright/test';
 import { getTestCredentials } from './test-utils';
 
+// Helper function to create a test podcast and return its ID
+async function createTestPodcast(page: any, titleSuffix: string = '') {
+  const uniqueSuffix = titleSuffix || `${Date.now()}`;
+
+  await page.goto('/podcasts/new');
+  await page.fill('input[name="title"]', `Upload Test Podcast ${uniqueSuffix}`);
+  await page.fill('input[name="rss_slug"]', `upload-test-${uniqueSuffix}`);
+  await page.fill('textarea[name="description"]', 'Test podcast for upload testing');
+
+  await page.click('button[type="submit"]');
+  await page.waitForURL(/\/podcasts\/[a-f0-9-]+$/, { timeout: 10000 });
+
+  // Extract podcast ID from URL
+  const url = page.url();
+  return url.split('/').pop();
+}
+
 test.describe('Episode Upload', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
@@ -14,21 +31,39 @@ test.describe('Episode Upload', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
   });
 
-  test('should show upload button on dashboard', async ({ page }) => {
-    // Check for Upload Episode card or button
+  test('should show upload button on podcast detail page', async ({ page }) => {
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
+    // Navigate to podcast detail page
+    await page.goto(`/podcasts/${podcastId}`);
+
+    // Check for "Upload Episode" button
     const uploadButton = page.getByRole('link', { name: /Upload Episode/i });
     await expect(uploadButton).toBeVisible();
   });
 
-  test('should navigate to upload page', async ({ page }) => {
-    // Click Upload Episode card or button
+  test('should navigate to upload page from podcast', async ({ page }) => {
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
+    // Navigate to podcast detail page
+    await page.goto(`/podcasts/${podcastId}`);
+
+    // Click Upload Episode button
     const uploadButton = page.getByRole('link', { name: /Upload Episode/i });
-    await uploadButton.first().click();
-    await expect(page).toHaveURL('/episodes/new');
+    await uploadButton.click();
+
+    // Should be on the podcast-scoped upload page
+    await expect(page).toHaveURL(new RegExp(`/podcasts/${podcastId}/episodes/new`));
   });
 
-  test('should upload an episode and transcribe it', async ({ page }) => {
-    await page.goto('/episodes/new');
+  test('should upload an episode to a podcast', async ({ page }) => {
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
+    // Navigate to upload page
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     // Fill in title
     await page.fill('input[name="title"]', 'Test Episode');
@@ -47,13 +82,17 @@ test.describe('Episode Upload', () => {
     // Wait for processing or navigation
     await page.waitForTimeout(5000);
 
-    // Check for success message or navigation
+    // Check for success - should be redirected to podcast episodes page
     const currentUrl = page.url();
-    expect(currentUrl).toMatch(/\/episodes/);
+    expect(currentUrl).toContain(`/podcasts/${podcastId}/episodes`);
   });
 
   test('should validate required fields', async ({ page }) => {
-    await page.goto('/episodes/new');
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
+    // Navigate to upload page
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     // Get current URL (should stay on same page if validation fails)
     const currentUrl = page.url();
@@ -65,12 +104,15 @@ test.describe('Episode Upload', () => {
     await page.waitForTimeout(1000);
 
     // Check that we're still on the same page (validation prevented submission)
-    // HTML5 validation shows browser's default validation, not custom error messages
     expect(page.url()).toBe(currentUrl);
   });
 
   test('should show error for invalid file type', async ({ page }) => {
-    await page.goto('/episodes/new');
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
+    // Navigate to upload page
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     // Fill in title
     await page.fill('input[name="title"]', 'Test Episode');
@@ -86,7 +128,7 @@ test.describe('Episode Upload', () => {
     // Submit form
     await page.click('button[type="submit"]');
 
-    // Check for error message - look for various error patterns
+    // Check for error message
     const error = page.locator('text=Invalid file type').or(
       page.locator('text=audio').or(
         page.locator('text=.mp3').or(
@@ -99,7 +141,11 @@ test.describe('Episode Upload', () => {
   });
 
   test('should allow removing selected file', async ({ page }) => {
-    await page.goto('/episodes/new');
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
+    // Navigate to upload page
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     // Upload a file
     const fileInput = page.locator('input[type="file"]');
@@ -109,7 +155,7 @@ test.describe('Episode Upload', () => {
       buffer: Buffer.from('fake audio content'),
     });
 
-    // Check for file name display - look for various patterns
+    // Check for file name display
     const fileName = page.locator('text=test.mp3').or(
       page.locator('[data-testid="file-name"]').or(
         page.locator('.file-name')
@@ -141,7 +187,11 @@ test.describe('Episode Upload', () => {
   });
 
   test('should show file size after selection', async ({ page }) => {
-    await page.goto('/episodes/new');
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
+    // Navigate to upload page
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     // Upload a file
     const fileInput = page.locator('input[type="file"]');
@@ -162,8 +212,12 @@ test.describe('Episode Upload', () => {
     expect(isVisible).toBeDefined();
   });
 
-  test('should navigate back to dashboard on cancel', async ({ page }) => {
-    await page.goto('/episodes/new');
+  test('should navigate back to podcast episodes on cancel', async ({ page }) => {
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
+    // Navigate to upload page
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     // Click cancel button if it exists
     const cancelButton = page.locator('button:has-text("Cancel")').or(
@@ -174,12 +228,16 @@ test.describe('Episode Upload', () => {
 
     if (count > 0) {
       await cancelButton.first().click();
-      await expect(page).toHaveURL(/\/(dashboard|episodes)/);
+      await expect(page).toHaveURL(new RegExp(`/podcasts/${podcastId}`));
     }
   });
 
   test('should have proper form labels', async ({ page }) => {
-    await page.goto('/episodes/new');
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
+    // Navigate to upload page
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     // Check for form labels
     await expect(page.locator('label:has-text("Title")')).toBeVisible();
@@ -187,5 +245,42 @@ test.describe('Episode Upload', () => {
 
     const audioOrFileLabel = page.locator('label:has-text("Audio"), label:has-text("File")');
     await expect(audioOrFileLabel).toBeVisible();
+  });
+
+  test('should not show podcast dropdown (context inferred from URL)', async ({ page }) => {
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
+    // Navigate to upload page
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
+
+    // Check that there is NO podcast dropdown (since it's inferred from URL)
+    const podcastDropdown = page.locator('select[name="podcast_id"]').or(
+      page.locator('label:has-text("Podcast (optional)")').or(
+        page.locator('label:has-text("Select a podcast")')
+      )
+    );
+
+    await expect(podcastDropdown).not.toBeVisible();
+  });
+
+  test('should show podcast context in upload page title', async ({ page }) => {
+    // Create a test podcast with a specific name
+    const uniqueSuffix = Date.now();
+    await page.goto('/podcasts/new');
+    await page.fill('input[name="title"]', `Context Test ${uniqueSuffix}`);
+    await page.fill('input[name="rss_slug"]', `context-test-${uniqueSuffix}`);
+    await page.fill('textarea[name="description"]', 'Test');
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/podcasts\/[a-f0-9-]+$/, { timeout: 10000 });
+
+    const url = page.url();
+    const podcastId = url.split('/').pop();
+
+    // Navigate to upload page
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
+
+    // Check that the podcast name is shown in the page title
+    await expect(page.getByText(/Add a new episode to Context Test/)).toBeVisible();
   });
 });
