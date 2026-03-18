@@ -1,7 +1,4 @@
-import { notFound, redirect } from 'next/navigation';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { supabase } from '@/lib/supabase';
+import { notFound } from 'next/navigation';
 
 type PlatformData = {
   ios: number;
@@ -46,9 +43,10 @@ async function getAnalytics(episodeId: string): Promise<AnalyticsData | null> {
 export default async function EpisodeAnalyticsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const analytics = await getAnalytics(params.id);
+  const { id } = await params;
+  const analytics = await getAnalytics(id);
 
   if (!analytics) {
     notFound();
@@ -146,7 +144,7 @@ export default async function EpisodeAnalyticsPage({
         {/* Back Link */}
         <div className="mt-8">
           <a
-            href={`/episodes/${params.id}`}
+            href={`/episodes/${id}`}
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
             ← Back to Episode

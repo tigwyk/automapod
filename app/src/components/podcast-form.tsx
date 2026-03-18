@@ -14,7 +14,7 @@ interface Podcast {
 interface PodcastFormProps {
   podcast?: Podcast;
   podcastId?: string;
-  action: (formData: FormData) => Promise<void>;
+  action: (prevState: { error?: string } | null, formData: FormData) => Promise<{ error?: string } | void>;
 }
 
 function SubmitButton({ podcast }: { podcast?: Podcast }) {
@@ -34,7 +34,7 @@ function SubmitButton({ podcast }: { podcast?: Podcast }) {
 export function PodcastForm({ podcast, podcastId, action }: PodcastFormProps) {
   const [title, setTitle] = useState(podcast?.title || '');
   const [rssSlug, setRssSlug] = useState(podcast?.rss_slug || '');
-  const [state, formAction] = useFormState(action, null);
+  const [state, formAction] = useFormState(action, null as { error?: string } | null);
 
   // Auto-generate RSS slug from title
   useEffect(() => {
