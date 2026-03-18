@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { PodcastForm } from '@/components/podcast-form';
 import { DeletePodcastButton } from '@/components/delete-podcast-button';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -99,16 +100,77 @@ export default async function PodcastDetailPage({
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <PodcastForm podcast={podcast} action={updatePodcast} podcastId={id} />
+    <div className="min-h-screen bg-muted/30">
+      <nav className="bg-white border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-white/95">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center gap-8">
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </div>
+                <h1 className="text-xl font-bold text-foreground">AutomaPod</h1>
+              </Link>
+              <div className="hidden md:flex items-center gap-6">
+                <Link href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Dashboard</Link>
+                <Link href="/podcasts" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Podcasts</Link>
+                <Link href={`/podcasts/${podcast.id}/episodes`} className="text-sm font-medium text-foreground hover:text-primary transition-colors">Episodes</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
 
-      <div className="mt-8 bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Danger Zone</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Once you delete a podcast, there is no going back. Please be certain.
-        </p>
-        <DeletePodcastButton podcastId={podcast.id} />
-      </div>
+      <main className="max-w-3xl mx-auto px-4 py-8">
+        {/* Breadcrumb Navigation */}
+        <nav className="mb-6" aria-label="Breadcrumb">
+          <ol className="flex items-center gap-2 text-sm">
+            <li>
+              <Link href="/podcasts" className="text-muted-foreground hover:text-foreground transition-colors">
+                All Podcasts
+              </Link>
+            </li>
+            <li className="text-muted-foreground">/</li>
+            <li className="text-foreground font-medium" aria-current="page">
+              {podcast.title}
+            </li>
+          </ol>
+        </nav>
+
+        <div className="card-elevated p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
+            </div>
+            <div className="flex gap-3">
+              <Link href={`/podcasts/${podcast.id}/episodes/new`} className="btn btn-primary">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Upload Episode
+              </Link>
+              <Link href={`/podcasts/${podcast.id}/episodes`} className="btn btn-outline">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                View Episodes
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <PodcastForm podcast={podcast} action={updatePodcast} podcastId={id} />
+
+        <div className="mt-8 card-elevated p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Danger Zone</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Once you delete a podcast, there is no going back. Please be certain.
+          </p>
+          <DeletePodcastButton podcastId={podcast.id} />
+        </div>
+      </main>
     </div>
   );
 }

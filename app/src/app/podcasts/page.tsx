@@ -41,7 +41,6 @@ export default async function PodcastsPage() {
               <div className="hidden md:flex items-center gap-6">
                 <Link href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Dashboard</Link>
                 <Link href="/podcasts" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Podcasts</Link>
-                <Link href="/episodes" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Episodes</Link>
               </div>
             </div>
             <div className="flex items-center gap-3">

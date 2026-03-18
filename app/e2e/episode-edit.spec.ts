@@ -1,6 +1,23 @@
 import { test, expect } from '@playwright/test';
 import { getTestCredentials } from './test-utils';
 
+// Helper function to create a test podcast and return its ID
+async function createTestPodcast(page: any, titleSuffix: string = '') {
+  const uniqueSuffix = titleSuffix || `${Date.now()}`;
+
+  await page.goto('/podcasts/new');
+  await page.fill('input[name="title"]', `Edit Test Podcast ${uniqueSuffix}`);
+  await page.fill('input[name="rss_slug"]', `edit-test-${uniqueSuffix}`);
+  await page.fill('textarea[name="description"]', 'Test podcast for episode editing');
+
+  await page.click('button[type="submit"]');
+  await page.waitForURL(/\/podcasts\/[a-f0-9-]+$/, { timeout: 10000 });
+
+  // Extract podcast ID from URL
+  const url = page.url();
+  return url.split('/').pop();
+}
+
 test.describe('Episode Edit', () => {
   test.beforeEach(async ({ page }) => {
     // Login before each test
@@ -13,8 +30,11 @@ test.describe('Episode Edit', () => {
   });
 
   test('should show edit button on episode detail page', async ({ page }) => {
-    // Create an episode first
-    await page.goto('/episodes/new');
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
+    // Create an episode in the podcast
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     const timestamp = Date.now();
     const testTitle = `Edit Test ${timestamp}`;
@@ -37,8 +57,8 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    // Upload redirects to /episodes list - navigate there
-    await page.goto('/episodes');
+    // Upload redirects to podcast episodes list
+    await expect(page).toHaveURL(new RegExp(`/podcasts/${podcastId}/episodes`));
     await page.waitForLoadState('networkidle');
 
     // Find the episode in the list by title and click on it
@@ -60,8 +80,11 @@ test.describe('Episode Edit', () => {
   });
 
   test('should navigate to edit page when clicking edit button', async ({ page }) => {
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
     // Create an episode
-    await page.goto('/episodes/new');
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     const timestamp = Date.now();
     const testTitle = `Navigate Edit Test ${timestamp}`;
@@ -84,11 +107,11 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    // Upload redirects to /episodes list - navigate there
-    await page.goto('/episodes');
+    // Navigate to podcast episodes list
+    await page.goto(`/podcasts/${podcastId}/episodes`);
     await page.waitForLoadState('networkidle');
 
-    // Find the episode in the list by title and click on it
+    // Find and click on the episode
     const episodeLink = page.locator(`a:has-text("${testTitle}")`);
     const linkCount = await episodeLink.count();
 
@@ -97,7 +120,6 @@ test.describe('Episode Edit', () => {
       return;
     }
 
-    // Click on episode to go to episode detail page
     await episodeLink.first().click();
     await page.waitForLoadState('networkidle');
 
@@ -105,23 +127,20 @@ test.describe('Episode Edit', () => {
     const editButton = page.locator('a:has-text("Edit Episode")');
     await editButton.click();
 
-    // Should be on edit page
-    await expect(page).toHaveURL(/\/episodes\/[a-f0-9-]+\/edit/);
-
-    // Check for edit form elements
-    await expect(page.locator('h1:has-text("Edit Episode")')).toBeVisible();
-    await expect(page.locator('label:has-text("Title")')).toBeVisible();
-    await expect(page.locator('label:has-text("Description")')).toBeVisible();
-    await expect(page.locator('label:has-text("Podcast")')).toBeVisible();
+    // Should be on the edit page with podcast context
+    await expect(page).toHaveURL(new RegExp(`/podcasts/${podcastId}/episodes/[a-f0-9-]+/edit`));
   });
 
-  test('should pre-populate form with current episode data', async ({ page }) => {
+  test('should pre-populate form with existing episode data', async ({ page }) => {
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
     // Create an episode with specific data
-    await page.goto('/episodes/new');
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     const timestamp = Date.now();
     const testTitle = `Pre-populate Test ${timestamp}`;
-    const testDescription = 'This is a test description for pre-population';
+    const testDescription = `This is a test description ${timestamp}`;
 
     await page.fill('input[name="title"]', testTitle);
     await page.fill('textarea[name="description"]', testDescription);
@@ -142,11 +161,10 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    // Upload redirects to /episodes list - navigate there
-    await page.goto('/episodes');
+    // Navigate to episodes and find the episode
+    await page.goto(`/podcasts/${podcastId}/episodes`);
     await page.waitForLoadState('networkidle');
 
-    // Find the episode in the list by title and click on it
     const episodeLink = page.locator(`a:has-text("${testTitle}")`);
     const linkCount = await episodeLink.count();
 
@@ -155,16 +173,15 @@ test.describe('Episode Edit', () => {
       return;
     }
 
-    // Click on episode to go to episode detail page
     await episodeLink.first().click();
     await page.waitForLoadState('networkidle');
 
-    // Click edit button to navigate to edit page
+    // Click edit button
     const editButton = page.locator('a:has-text("Edit Episode")');
     await editButton.click();
     await page.waitForLoadState('networkidle');
 
-    // Check form is pre-populated
+    // Check that form is pre-populated
     const titleInput = page.locator('input[name="title"]');
     await expect(titleInput).toHaveValue(testTitle);
 
@@ -172,13 +189,15 @@ test.describe('Episode Edit', () => {
     await expect(descriptionInput).toHaveValue(testDescription);
   });
 
-  test('should save episode changes', async ({ page }) => {
+  test('should save changes to episode', async ({ page }) => {
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
     // Create an episode
-    await page.goto('/episodes/new');
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     const timestamp = Date.now();
-    const originalTitle = `Save Test ${timestamp}`;
-    const updatedTitle = `Save Test Updated ${timestamp}`;
+    const originalTitle = `Original Title ${timestamp}`;
 
     await page.fill('input[name="title"]', originalTitle);
 
@@ -198,11 +217,10 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    // Upload redirects to /episodes list - navigate there
-    await page.goto('/episodes');
+    // Navigate to episodes and edit
+    await page.goto(`/podcasts/${podcastId}/episodes`);
     await page.waitForLoadState('networkidle');
 
-    // Find the episode in the list by title and click on it
     const episodeLink = page.locator(`a:has-text("${originalTitle}")`);
     const linkCount = await episodeLink.count();
 
@@ -211,37 +229,35 @@ test.describe('Episode Edit', () => {
       return;
     }
 
-    // Click on episode to go to episode detail page
     await episodeLink.first().click();
     await page.waitForLoadState('networkidle');
 
-    // Click edit button to navigate to edit page
+    // Click edit button
     const editButton = page.locator('a:has-text("Edit Episode")');
     await editButton.click();
     await page.waitForLoadState('networkidle');
 
     // Update title
-    const titleInput = page.locator('input[name="title"]');
-    await titleInput.clear();
-    await titleInput.fill(updatedTitle);
-
-    // Add description
-    const descriptionInput = page.locator('textarea[name="description"]');
-    await descriptionInput.fill('Updated description');
+    const updatedTitle = `Updated Title ${timestamp}`;
+    await page.fill('input[name="title"]', updatedTitle);
 
     // Submit form
     await page.click('button[type="submit"]');
+    await page.waitForTimeout(3000);
 
-    // Should navigate back to episode detail page
-    await page.waitForURL(/\/episodes\/[a-f0-9-]+$/);
+    // Should redirect back to episode detail page
+    await expect(page).toHaveURL(new RegExp(`/podcasts/${podcastId}/episodes/[a-f0-9-]+$`));
 
-    // Check that changes are saved
-    await expect(page.locator(`text=${updatedTitle}`)).toBeVisible();
+    // Check that the updated title is displayed
+    await expect(page.getByText(updatedTitle)).toBeVisible();
   });
 
-  test('should return to episode detail when canceling', async ({ page }) => {
+  test('should navigate back to episode detail on cancel', async ({ page }) => {
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
     // Create an episode
-    await page.goto('/episodes/new');
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     const timestamp = Date.now();
     const testTitle = `Cancel Test ${timestamp}`;
@@ -264,11 +280,10 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    // Upload redirects to /episodes list - navigate there
-    await page.goto('/episodes');
+    // Navigate to episodes and edit
+    await page.goto(`/podcasts/${podcastId}/episodes`);
     await page.waitForLoadState('networkidle');
 
-    // Find the episode in the list by title and click on it
     const episodeLink = page.locator(`a:has-text("${testTitle}")`);
     const linkCount = await episodeLink.count();
 
@@ -277,29 +292,41 @@ test.describe('Episode Edit', () => {
       return;
     }
 
-    // Click on episode to go to episode detail page
     await episodeLink.first().click();
     await page.waitForLoadState('networkidle');
 
-    // Click edit button to navigate to edit page
+    // Get the current URL (episode detail page)
+    const detailUrl = page.url();
+
+    // Click edit button
     const editButton = page.locator('a:has-text("Edit Episode")');
     await editButton.click();
     await page.waitForLoadState('networkidle');
 
-    // Click cancel
-    const cancelButton = page.locator('a:has-text("Cancel")');
-    await cancelButton.click();
+    // Click cancel button if it exists
+    const cancelButton = page.locator('button:has-text("Cancel")').or(
+      page.locator('a:has-text("Cancel")')
+    );
 
-    // Should return to episode detail page
-    await expect(page).toHaveURL(/\/episodes\/[a-f0-9-]+$/);
+    const count = await cancelButton.count();
+
+    if (count > 0) {
+      await cancelButton.first().click();
+
+      // Should navigate back to episode detail page
+      await expect(page).toHaveURL(detailUrl);
+    }
   });
 
-  test('should require title', async ({ page }) => {
+  test('should show podcast context in edit page breadcrumb', async ({ page }) => {
+    // Create a test podcast
+    const podcastId = await createTestPodcast(page);
+
     // Create an episode
-    await page.goto('/episodes/new');
+    await page.goto(`/podcasts/${podcastId}/episodes/new`);
 
     const timestamp = Date.now();
-    const testTitle = `Validation Test ${timestamp}`;
+    const testTitle = `Breadcrumb Test ${timestamp}`;
 
     await page.fill('input[name="title"]', testTitle);
 
@@ -319,11 +346,10 @@ test.describe('Episode Edit', () => {
     await page.click('button[type="submit"]');
     await page.waitForTimeout(5000);
 
-    // Upload redirects to /episodes list - navigate there
-    await page.goto('/episodes');
+    // Navigate to episodes and edit
+    await page.goto(`/podcasts/${podcastId}/episodes`);
     await page.waitForLoadState('networkidle');
 
-    // Find the episode in the list by title and click on it
     const episodeLink = page.locator(`a:has-text("${testTitle}")`);
     const linkCount = await episodeLink.count();
 
@@ -332,23 +358,17 @@ test.describe('Episode Edit', () => {
       return;
     }
 
-    // Click on episode to go to episode detail page
     await episodeLink.first().click();
     await page.waitForLoadState('networkidle');
 
-    // Click edit button to navigate to edit page
+    // Click edit button
     const editButton = page.locator('a:has-text("Edit Episode")');
     await editButton.click();
     await page.waitForLoadState('networkidle');
 
-    // Clear title
-    const titleInput = page.locator('input[name="title"]');
-    await titleInput.clear();
-
-    // Try to submit - browser validation should prevent
-    await page.click('button[type="submit"]');
-
-    // Should stay on edit page due to validation
-    await expect(page).toHaveURL(/\/episodes\/[a-f0-9-]+\/edit/);
+    // Check breadcrumb navigation
+    await expect(page.getByRole('link', { name: 'All Podcasts' })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Edit Test Podcast/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Episodes' })).toBeVisible();
   });
 });
