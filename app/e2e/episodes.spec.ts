@@ -19,7 +19,7 @@ test.describe('Episode List', () => {
     await page.goto('/podcasts/new');
 
     await page.fill('input[name="title"]', 'Test Podcast for Episodes');
-    await page.fill('input[name="rss_slug"]', 'test-episodes-podcast');
+    await page.fill('input[name="rss_slug"]', `test-episodes-podcast-${Date.now()}`);
     await page.fill('textarea[name="description"]', 'A test podcast for episode testing');
 
     await page.click('button[type="submit"]');

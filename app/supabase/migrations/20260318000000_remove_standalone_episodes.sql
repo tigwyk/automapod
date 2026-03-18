@@ -33,6 +33,9 @@ COMMENT ON COLUMN episodes.podcast_id IS 'Required: Every episode must belong to
 -- UPDATE RLS POLICIES (simplified - no more standalone logic)
 -- ============================================================
 
+-- Re-enable RLS (it was disabled in a previous test migration)
+ALTER TABLE episodes ENABLE ROW LEVEL SECURITY;
+
 -- Drop ALL existing policies
 DO $$
 DECLARE

@@ -15,10 +15,8 @@ export function SimpleUploadForm({ podcastTitle, action, backUrl }: SimpleUpload
     setIsSubmitting(true);
     try {
       await action(formData);
-    } catch (error) {
+    } finally {
       setIsSubmitting(false);
-      // Error will be handled by the server action
-      throw error;
     }
   }
 
