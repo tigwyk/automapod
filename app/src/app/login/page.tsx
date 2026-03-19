@@ -1,6 +1,14 @@
 import Link from 'next/link';
 
-export default function LoginPage() {
+interface LoginPageProps {
+  searchParams: Promise<{ error?: string; success?: string }>;
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const errorMessage = params?.error;
+  const successMessage = params?.success;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
@@ -25,6 +33,20 @@ export default function LoginPage() {
         </div>
 
         <div className="card-elevated p-8">
+          {successMessage === 'check_email' && (
+            <div className="alert alert-success">
+              <strong>Check your email!</strong> We've sent you a verification link. Please verify your email before signing in.
+            </div>
+          )}
+
+          {errorMessage && (
+            <div className="alert alert-error">
+              {errorMessage === 'Email not confirmed'
+                ? 'Please verify your email before signing in. Check your inbox for the verification link.'
+                : errorMessage}
+            </div>
+          )}
+
           <form className="space-y-5" action="/api/auth/signin" method="POST">
             <div>
               <label htmlFor="email" className="label mb-1.5 block">

@@ -214,4 +214,31 @@
     background-color: rgb(241 245 249);
     color: rgb(100 116 139);
   }
+
+  /* Alert styles */
+  .alert {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .alert-success {
+    background-color: rgb(16 185 129 / 0.1);
+    border: 1px solid rgb(16 185 129 / 0.2);
+    color: rgb(5 150 105);
+  }
+
+  .alert-error {
+    background-color: rgb(244 63 94 / 0.1);
+    border: 1px solid rgb(244 63 94 / 0.2);
+    color: rgb(190 18 60);
+  }
+
+  .alert-info {
+    background-color: rgb(13 148 136 / 0.1);
+    border: 1px solid rgb(13 148 136 / 0.2);
+    color: rgb(8 120 110);
+  }
 }
