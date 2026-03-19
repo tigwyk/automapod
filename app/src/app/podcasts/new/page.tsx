@@ -61,7 +61,7 @@ async function createPodcast(prevState: { error?: string } | null, formData: For
     return { error: insertError?.message || 'Failed to create podcast' };
   }
 
-  redirect('/podcasts');
+  redirect(`/podcasts/${podcast.id}`);
 }
 
 export default async function NewPodcastPage() {
