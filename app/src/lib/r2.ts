@@ -16,26 +16,29 @@ const getRequiredEnv = (name: string): string => {
   return value.trim();
 };
 
-// R2 Configuration
-export const R2_CONFIG = {
-  accountId: getRequiredEnv('R2_ACCOUNT_ID'),
-  accessKeyId: getRequiredEnv('R2_ACCESS_KEY_ID'),
-  secretAccessKey: getRequiredEnv('R2_SECRET_ACCESS_KEY'),
-  bucketName: getRequiredEnv('R2_EPISODES_BUCKET'),
-  publicUrl: getRequiredEnv('R2_EPISODES_CUSTOM_DOMAIN'),
-} as const;
+// R2 Configuration (lazy-loaded to avoid build-time errors)
+function getR2Config() {
+  return {
+    accountId: getRequiredEnv('R2_ACCOUNT_ID'),
+    accessKeyId: getRequiredEnv('R2_ACCESS_KEY_ID'),
+    secretAccessKey: getRequiredEnv('R2_SECRET_ACCESS_KEY'),
+    bucketName: getRequiredEnv('R2_EPISODES_BUCKET'),
+    publicUrl: getRequiredEnv('R2_EPISODES_CUSTOM_DOMAIN'),
+  } as const;
+}
 
 // R2 Client (singleton)
 let r2Client: S3Client | null = null;
 
 function getR2Client(): S3Client {
   if (!r2Client) {
+    const config = getR2Config();
     r2Client = new S3Client({
       region: 'auto',
-      endpoint: `https://${R2_CONFIG.accountId}.r2.cloudflarestorage.com`,
+      endpoint: `https://${config.accountId}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: R2_CONFIG.accessKeyId,
-        secretAccessKey: R2_CONFIG.secretAccessKey,
+        accessKeyId: config.accessKeyId,
+        secretAccessKey: config.secretAccessKey,
       },
     });
   }
@@ -93,8 +96,9 @@ export async function uploadToR2(
   }
 
   try {
+    const config = getR2Config();
     const command = new PutObjectCommand({
-      Bucket: R2_CONFIG.bucketName,
+      Bucket: config.bucketName,
       Key: key,
       Body: body,
       ContentType: contentType,
@@ -103,7 +107,7 @@ export async function uploadToR2(
     await getR2Client().send(command);
 
     // Return public URL
-    return `${R2_CONFIG.publicUrl}/${key}`;
+    return `${config.publicUrl}/${key}`;
   } catch (error) {
     console.error('R2 upload failed:', error);
     throw new Error(
@@ -120,8 +124,9 @@ export async function uploadToR2(
  */
 export async function deleteFromR2(key: string): Promise<void> {
   try {
+    const config = getR2Config();
     const command = new DeleteObjectCommand({
-      Bucket: R2_CONFIG.bucketName,
+      Bucket: config.bucketName,
       Key: key,
     });
 
@@ -169,6 +174,11 @@ export function isValidFileSize(file: File, maxSizeMB: number = 500): boolean {
   return file.size <= maxSizeBytes;
 }
 
-// Re-export constants for backward compatibility
-export const R2_EPISODES_BUCKET = R2_CONFIG.bucketName;
-export const R2_EPISODES_CUSTOM_DOMAIN = R2_CONFIG.publicUrl;
+// Re-export constants for backward compatibility (lazy-loaded)
+export function getR2EpisodesBucket(): string {
+  return getR2Config().bucketName;
+}
+
+export function getR2EpisodesCustomDomain(): string {
+  return getR2Config().publicUrl;
+}

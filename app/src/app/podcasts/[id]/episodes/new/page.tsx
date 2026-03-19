@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { uploadToR2, isValidAudioFile, isValidFileSize, R2_EPISODES_CUSTOM_DOMAIN } from '@/lib/r2';
+import { uploadToR2, isValidAudioFile, isValidFileSize, getR2EpisodesCustomDomain } from '@/lib/r2';
 import { SimpleUploadForm } from '@/components/simple-upload-form';
 
 export const dynamic = 'force-dynamic';
@@ -98,8 +98,8 @@ async function uploadEpisode(podcastId: string, formData: FormData) {
     // If database insert fails, try to clean up the uploaded file
     try {
       const { deleteFromR2 } = await import('@/lib/r2');
-      if (audioUrl.startsWith(R2_EPISODES_CUSTOM_DOMAIN)) {
-        const key = audioUrl.replace(R2_EPISODES_CUSTOM_DOMAIN, '').replace(/^\//, '');
+      if (audioUrl.startsWith(getR2EpisodesCustomDomain())) {
+        const key = audioUrl.replace(getR2EpisodesCustomDomain(), '').replace(/^\//, '');
         await deleteFromR2(key);
       }
     } catch (cleanupError) {
