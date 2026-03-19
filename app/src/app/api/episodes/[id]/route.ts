@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { deleteFromR2, R2_EPISODES_CUSTOM_DOMAIN } from '@/lib/r2';
+import { deleteFromR2, getR2EpisodesCustomDomain } from '@/lib/r2';
 
 /**
  * Verifies that the user owns the episode via its podcast.
@@ -147,8 +147,9 @@ export async function DELETE(
     if (episode.audio_url) {
       try {
         // Extract the R2 key from the URL
-        if (R2_EPISODES_CUSTOM_DOMAIN && episode.audio_url.startsWith(R2_EPISODES_CUSTOM_DOMAIN)) {
-          const key = episode.audio_url.replace(R2_EPISODES_CUSTOM_DOMAIN, '').replace(/^\//, '');
+        const r2CustomDomain = getR2EpisodesCustomDomain();
+        if (r2CustomDomain && episode.audio_url.startsWith(r2CustomDomain)) {
+          const key = episode.audio_url.replace(r2CustomDomain, '').replace(/^\//, '');
           await deleteFromR2(key);
         }
       } catch (r2Error) {
