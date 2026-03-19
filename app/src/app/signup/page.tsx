@@ -1,6 +1,13 @@
 import Link from 'next/link';
 
-export default function SignupPage() {
+interface SignupPageProps {
+  searchParams: Promise<{ error?: string }>;
+}
+
+export default async function SignupPage({ searchParams }: SignupPageProps) {
+  const params = await searchParams;
+  const errorMessage = params?.error;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
@@ -25,6 +32,12 @@ export default function SignupPage() {
         </div>
 
         <div className="card-elevated p-8">
+          {errorMessage && (
+            <div className="alert alert-error">
+              {errorMessage}
+            </div>
+          )}
+
           <form className="space-y-5" action="/api/auth/signup" method="POST">
             <div>
               <label htmlFor="email" className="label mb-1.5 block">

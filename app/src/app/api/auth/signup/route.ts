@@ -17,5 +17,6 @@ export async function POST(request: Request) {
     return redirect(`/signup?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect('/dashboard');
+  // Redirect to login with a success message to check email
+  redirect('/login?success=check_email');
 }
