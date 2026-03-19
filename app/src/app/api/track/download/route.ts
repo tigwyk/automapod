@@ -62,8 +62,8 @@ export async function GET(request: NextRequest) {
     .single();
 
   if (episodeError || !episode || !episode.audio_url) {
-    // Episode not found - return GIF in pixel mode, otherwise 404
-    return pixelMode ? returnPixelGif() : new NextResponse('Episode not found', { status: 404 });
+    // Episode not found - always return GIF silently (for RSS reader compatibility)
+    return returnPixelGif();
   }
 
   // Get client IP (check multiple headers for different deployments)
