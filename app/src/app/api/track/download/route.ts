@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 // 1x1 transparent GIF (43 bytes) - for pixel tracking mode
 const PIXEL_GIF = Buffer.from(
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
@@ -52,6 +47,12 @@ export async function GET(request: NextRequest) {
   if (!episodeId || typeof episodeId !== 'string') {
     return returnPixelGif();
   }
+
+  // Lazy-load Supabase client (environment variables not available at build time)
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   // Fetch episode to get the actual audio URL
   const { data: episode, error: episodeError } = await supabase
