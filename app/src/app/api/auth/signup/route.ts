@@ -8,9 +8,14 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      emailRedirectTo: siteUrl,
+    },
   });
 
   if (error) {
