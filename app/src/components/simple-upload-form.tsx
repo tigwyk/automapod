@@ -34,10 +34,10 @@ export function SimpleUploadForm({ podcastTitle, action, backUrl }: SimpleUpload
       </div>
 
       {errorMessage && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4" role="alert">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 00016zm1-8a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-2 0v4a1 1 0 112 0v-4z" clipRule="evenodd" />
               </svg>
             </div>

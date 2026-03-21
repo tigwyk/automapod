@@ -177,7 +177,10 @@ export default async function NewEpisodePage({ params }: Props) {
 
         <SimpleUploadForm
           podcastTitle={podcast.title}
-          action={(prevState, formData) => uploadEpisode(prevState, podcast.id, formData)}
+          action={async (prevState, formData) => {
+            'use server';
+            return uploadEpisode(prevState, podcast.id, formData);
+          }}
           backUrl={`/podcasts/${podcast.id}/episodes`}
         />
       </main>
