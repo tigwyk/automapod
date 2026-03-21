@@ -28,14 +28,18 @@ async function getPodcast(podcastId: string) {
   return podcast;
 }
 
-async function uploadEpisode(podcastId: string, formData: FormData) {
+async function uploadEpisode(
+  prevState: { error?: string } | null,
+  podcastId: string,
+  formData: FormData
+): Promise<{ error?: string } | null> {
   'use server';
 
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    redirect('/login');
+    return { error: 'You must be logged in to upload an episode' };
   }
 
   // Verify user owns this podcast
@@ -47,7 +51,7 @@ async function uploadEpisode(podcastId: string, formData: FormData) {
     .single();
 
   if (!podcast) {
-    throw new Error('Podcast not found or access denied');
+    return { error: 'Podcast not found or access denied' };
   }
 
   const fileValue = formData.get('audio');
@@ -55,30 +59,36 @@ async function uploadEpisode(podcastId: string, formData: FormData) {
   const description = formData.get('description') as string || '';
 
   if (!title) {
-    throw new Error('Title is required');
+    return { error: 'Title is required' };
   }
 
   if (!(fileValue instanceof File) || fileValue.size === 0) {
-    throw new Error('Audio file is required');
+    return { error: 'Audio file is required' };
   }
 
   const file = fileValue;
 
   // Validate file type
   if (!isValidAudioFile(file)) {
-    throw new Error('Invalid file type. Please upload an audio file (MP3, M4A, WAV, or OGG)');
+    return { error: 'Invalid file type. Please upload an audio file (MP3, M4A, WAV, or OGG)' };
   }
 
   // Validate file size (500MB max)
   if (!isValidFileSize(file)) {
-    throw new Error('File size exceeds 500MB limit');
+    return { error: 'File size exceeds 500MB limit' };
   }
 
   // Generate a temporary episode ID for R2 upload path
   const tempEpisodeId = crypto.randomUUID();
 
-  // Upload to R2 first to get the audio URL
-  const audioUrl = await uploadToR2(file, tempEpisodeId, file.name);
+  let audioUrl: string;
+  try {
+    // Upload to R2 first to get the audio URL
+    audioUrl = await uploadToR2(file, tempEpisodeId, file.name);
+  } catch (error) {
+    console.error('R2 upload failed:', error);
+    return { error: `Failed to upload audio file: ${error instanceof Error ? error.message : 'Unknown error'}` };
+  }
 
   // Now create the episode record with the actual audio URL
   const { data: episode, error: insertError } = await supabase
@@ -105,7 +115,7 @@ async function uploadEpisode(podcastId: string, formData: FormData) {
     } catch (cleanupError) {
       console.error('Failed to cleanup R2 file after DB error:', cleanupError);
     }
-    throw new Error(insertError?.message || 'Failed to create episode');
+    return { error: insertError?.message || 'Failed to create episode' };
   }
 
   redirect(`/podcasts/${podcastId}/episodes`);
@@ -167,7 +177,7 @@ export default async function NewEpisodePage({ params }: Props) {
 
         <SimpleUploadForm
           podcastTitle={podcast.title}
-          action={uploadEpisode.bind(null, podcast.id)}
+          action={(prevState, formData) => uploadEpisode(prevState, podcast.id, formData)}
           backUrl={`/podcasts/${podcast.id}/episodes`}
         />
       </main>
