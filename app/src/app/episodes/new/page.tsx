@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { uploadToR2, isValidAudioFile, isValidFileSize } from '@/lib/r2';
+import { uploadToR2, isValidAudioFile, isValidFileSize, getR2EpisodesCustomDomain } from '@/lib/r2';
 import { UploadForm } from '@/components/upload-form';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +37,21 @@ async function uploadEpisode(
   const fileValue = formData.get('audio');
   const title = formData.get('title') as string;
   const description = formData.get('description') as string || '';
-  const podcastId = formData.get('podcast_id') as string;
+  const podcastId = (formData.get('podcast_id') as string) || null;
+
+  // If a podcast is selected, verify the current user owns it
+  if (podcastId) {
+    const { data: podcast } = await supabase
+      .from('podcasts')
+      .select('id')
+      .eq('id', podcastId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!podcast) {
+      return { error: 'Podcast not found or access denied' };
+    }
+  }
 
   if (!title) {
     return { error: 'Title is required' };
@@ -80,8 +94,10 @@ async function uploadEpisode(
       audio_url: audioUrl,
       duration_seconds: null,
       transcript_status: 'pending',
-      podcast_id: podcastId || null,
-      user_id: user.id,  // Set owner for proper ownership tracking
+      podcast_id: podcastId,
+      // Only set user_id for standalone episodes; podcast-scoped episodes are
+      // owned via the podcast relationship.
+      ...(podcastId ? {} : { user_id: user.id }),
     })
     .select()
     .single();
@@ -90,9 +106,9 @@ async function uploadEpisode(
     // If database insert fails, try to clean up the uploaded file
     try {
       const { deleteFromR2 } = await import('@/lib/r2');
-      const { getR2EpisodesCustomDomain } = await import('@/lib/r2');
-      if (audioUrl.startsWith(getR2EpisodesCustomDomain())) {
-        const key = audioUrl.replace(getR2EpisodesCustomDomain(), '').replace(/^\//, '');
+      const customDomain = getR2EpisodesCustomDomain();
+      if (audioUrl.startsWith(customDomain)) {
+        const key = audioUrl.replace(customDomain, '').replace(/^\//, '');
         await deleteFromR2(key);
       }
     } catch (cleanupError) {
