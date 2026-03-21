@@ -9,7 +9,9 @@
     "lint": "next lint",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "playwright test --debug"
+    "test:e2e:debug": "playwright test --debug",
+    "test:prod": "playwright test --config=playwright.prod.config.ts",
+    "test:prod:ui": "playwright test --config=playwright.prod.config.ts --ui"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1009.0",
