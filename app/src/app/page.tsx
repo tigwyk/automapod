@@ -1,6 +1,23 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-export default function HomePage() {
+interface HomePageProps {
+  searchParams: Promise<{ code?: string; state?: string; error?: string }>;
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const params = await searchParams;
+
+  // If there's a code parameter, redirect to the auth callback handler
+  if (params?.code) {
+    const stateParam = params?.state ? `&state=${params.state}` : '';
+    redirect(`/auth/callback?code=${params.code}${stateParam}`);
+  }
+
+  // If there's an error parameter, redirect to login with error
+  if (params?.error) {
+    redirect(`/login?error=${encodeURIComponent(params.error)}`);
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/5">
       <nav className="border-b border-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
