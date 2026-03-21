@@ -283,4 +283,66 @@ test.describe('Episode Upload', () => {
     // Check that the podcast name is shown in the page title
     await expect(page.getByText(/Add a new episode to Context Test/)).toBeVisible();
   });
+
+  test.describe('Global upload page (/episodes/new) error banner', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto('/login');
+      const { email, password } = getTestCredentials();
+      await page.fill('input[type="email"]', email);
+      await page.fill('input[type="password"]', password);
+      await page.click('button[type="submit"]');
+      await page.waitForURL('/dashboard', { timeout: 10000 });
+    });
+
+    test('should show error banner with role="alert" for invalid file type', async ({ page }) => {
+      await page.goto('/episodes/new');
+
+      await page.fill('input[name="title"]', 'Test Episode');
+
+      const fileInput = page.locator('input[name="audio"]');
+      await fileInput.setInputFiles({
+        name: 'test.txt',
+        mimeType: 'text/plain',
+        buffer: Buffer.from('not an audio file'),
+      });
+
+      await page.click('button[type="submit"]');
+
+      // Wait for the server action to respond and the error banner to appear
+      const alert = page.locator('[role="alert"]');
+      await expect(alert).toBeVisible({ timeout: 10000 });
+      await expect(alert).toContainText('Invalid file type');
+    });
+
+    test('should show error banner with role="alert" when title is missing', async ({ page }) => {
+      await page.goto('/episodes/new');
+
+      // Remove the required attribute via JS so the form submits without a title
+      await page.evaluate(() => {
+        const titleInput = document.querySelector<HTMLInputElement>('input[name="title"]');
+        if (titleInput) titleInput.removeAttribute('required');
+      });
+
+      const fileInput = page.locator('input[name="audio"]');
+      await fileInput.setInputFiles({
+        name: 'test.mp3',
+        mimeType: 'audio/mpeg',
+        buffer: Buffer.from('fake audio content'),
+      });
+
+      // Remove required from audio input too so we can submit with just a missing title
+      await page.evaluate(() => {
+        const audioInput = document.querySelector<HTMLInputElement>('input[name="audio"]');
+        if (audioInput) audioInput.removeAttribute('required');
+      });
+
+      // Clear any title value and submit
+      await page.fill('input[name="title"]', '');
+      await page.click('button[type="submit"]');
+
+      const alert = page.locator('[role="alert"]');
+      await expect(alert).toBeVisible({ timeout: 10000 });
+      await expect(alert).toContainText('Title is required');
+    });
+  });
 });
