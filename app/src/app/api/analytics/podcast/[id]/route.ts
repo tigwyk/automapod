@@ -104,7 +104,7 @@ export async function GET(
 
     const allDownloads = downloads ?? [];
 
-    // Account-level totals
+    // Podcast-level totals (across all episodes)
     const totalDownloads = allDownloads.length;
     const uniqueDownloads = new Set(allDownloads.map((d) => d.ip_hash)).size;
 
@@ -116,14 +116,19 @@ export async function GET(
       other: 0,
     };
     allDownloads.forEach((d) => {
-      if (d.platform && platformBreakdown[d.platform] !== undefined) {
-        platformBreakdown[d.platform]++;
+      const platformKey = (d.platform ?? 'other').toLowerCase();
+      if (platformKey in platformBreakdown) {
+        platformBreakdown[platformKey]++;
+      } else {
+        platformBreakdown.other++;
       }
     });
 
     // Downloads over time (last 30 days, all episodes combined)
+    // Use 29 days ago as cutoff to align with buildTimeSeries which generates
+    // points from day -29 through today (30 points total).
     const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
 
     const dailyCounts: Record<string, number> = {};
     allDownloads.forEach((d) => {

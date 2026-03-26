@@ -176,7 +176,7 @@ export default async function PodcastAnalyticsPage({
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1 rotate-45 origin-bottom-left truncate w-12">
-                      {new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {new Date(`${data.date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
                     </div>
                   </div>
                 );
