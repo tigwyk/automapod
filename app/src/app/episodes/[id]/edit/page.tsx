@@ -97,6 +97,7 @@ export default function EditEpisodePage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!episode) return;
     setSaving(true);
     setError(null);
 
