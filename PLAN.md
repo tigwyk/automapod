@@ -105,17 +105,17 @@ AutomaPod is an all-in-one podcast suite covering hosting, production, analytics
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 
 ### 5.2 Core Features
-- [x] Audio upload and processing
+- [x] Audio upload and processing (presigned R2 URL, direct browser → R2)
 - [x] User authentication (Supabase)
 - [x] Transcription (Groq Whisper)
 - [x] Episode database schema
-- [x] E2E test suite (78 tests: 73 passing, 5 skipped)
+- [x] E2E test suite (85+ tests passing)
 - [x] RSS feed generation
 - [x] Podcast management UI
 - [x] Episode management UI
 - [x] R2 storage library
-- [ ] Analytics dashboard (FUTURE)
-- [ ] Subscription/billing management (FUTURE)
+- [x] Analytics dashboard (overview → podcast → episode drill-down)
+- [ ] Subscription/billing management (NEXT)
 
 ---
 
@@ -135,9 +135,10 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 - [x] Transcription result display
 - [x] Episode creation in database
 - [x] Progress indicators
+- [x] Presigned R2 upload (browser → R2 direct, no server body limit)
 
 ### 6.3 Testing
-- [x] Playwright E2E test suite (78 tests total)
+- [x] Playwright E2E test suite (85+ tests total)
 - [x] Authentication tests (14 tests)
 - [x] Dashboard tests (8 tests)
 - [x] Upload tests (9 tests)
@@ -146,9 +147,12 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 - [x] RSS feed tests (10 tests)
 - [x] R2 integration tests (20 tests)
 - [x] Analytics tests (6 tests)
+- [x] Podcast analytics tests (4 tests)
+- [x] Analytics overview tests (7 tests)
 - [x] Transcription tests (6 tests)
 - [x] Episode edit tests (7 tests)
 - [x] Test documentation
+- [x] TypeScript strict mode — tsc --noEmit exits clean
 
 ### 6.4 Episode Management
 - [x] Episode list page (view all episodes)
@@ -160,8 +164,10 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 ### 6.5 Additional Features (Complete)
 - [x] Podcast creation/management (CRUD + validation)
 - [x] RSS feed generation per podcast (RSS 2.0 + iTunes)
-- [x] R2 storage library implementation (upload, delete, validation)
+- [x] R2 storage library implementation (upload, delete, validation, presigned URLs)
 - [x] R2 cleanup on episode deletion (orphaned file cleanup)
+- [x] Download tracking (pixel + redirect modes, IP hashing, platform detection)
+- [x] Analytics dashboard — overview, podcast-level, episode-level with drill-down nav
 
 ---
 
@@ -206,21 +212,24 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 
 ---
 
-## Phase 8: Advanced Features 📋 FUTURE
+## Phase 8: Monetisation 📋 NEXT
 
-### 8.1 Advanced Workflows
+### 8.1 Subscription / Billing (Priority)
+- [ ] Define tier structure (Free / Pro / Business) — use `/amp-pricing`
+- [ ] Stripe customer + subscription creation
+- [ ] Billing portal (manage plan, cancel, invoices)
+- [ ] Webhook handling (subscription created/updated/cancelled)
+- [ ] Tier enforcement (usage limits per plan)
+- [ ] Upgrade/downgrade flows in UI
+
+### 8.2 Enhanced Automation
+- [ ] BullMQ transcription worker — deploy as long-running process (not serverless)
+- [ ] Automated deployment pipelines
+
+### 8.3 Advanced Workflows (Optional)
 - [ ] Multi-worktree parallel development execution
 - [ ] Automated job deployment to production
-- [ ] Advanced analytics dashboards
-
-### 8.2 Additional Skills (Optional)
 - [ ] amp-meetings (Meeting notes, transcripts)
-- [ ] CEOS skills (if adopting EOS framework)
-
-### 8.3 Enhanced Automation
-- [ ] transcription-queue (BullMQ worker)
-- [ ] Advanced analytics aggregation
-- [ ] Automated deployment pipelines
 
 ---
 
@@ -278,4 +287,4 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 
 ---
 
-*Last updated: 2026-03-17 - Audit completed. Duplicates removed, counts updated.*
+*Last updated: 2026-03-25 — Analytics dashboard complete (AMP-43/44/45). Upload fixed with presigned R2 URLs (AMP-47). TypeScript clean (AMP-46). Phase 8 reoriented to monetisation.*
