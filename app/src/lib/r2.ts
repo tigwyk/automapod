@@ -6,6 +6,7 @@
  */
 
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // Environment variables with validation
 const getRequiredEnv = (name: string): string => {
@@ -172,6 +173,24 @@ export function isValidAudioFile(file: File): boolean {
 export function isValidFileSize(file: File, maxSizeMB: number = 500): boolean {
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   return file.size <= maxSizeBytes;
+}
+
+/**
+ * Generate a presigned PUT URL for direct-to-R2 browser uploads.
+ * The URL is valid for 15 minutes.
+ *
+ * @param key    - The R2 storage key (from generateEpisodeKey)
+ * @param contentType - MIME type of the file being uploaded
+ * @returns A presigned URL the client can PUT to directly
+ */
+export async function getPresignedUploadUrl(key: string, contentType: string): Promise<string> {
+  const config = getR2Config();
+  const command = new PutObjectCommand({
+    Bucket: config.bucketName,
+    Key: key,
+    ContentType: contentType,
+  });
+  return getSignedUrl(getR2Client(), command, { expiresIn: 900 });
 }
 
 // Re-export constants for backward compatibility (lazy-loaded)
