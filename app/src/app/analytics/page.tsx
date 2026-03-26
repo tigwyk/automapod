@@ -1,32 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-
-type PodcastStat = {
-  id: string;
-  title: string;
-  episodeCount: number;
-  totalDownloads: number;
-  uniqueDownloads: number;
-};
-
-type OverviewData = {
-  totalDownloads: number;
-  totalUniqueDownloads: number;
-  podcasts: PodcastStat[];
-};
-
-async function getOverview(siteUrl: string): Promise<OverviewData | null> {
-  try {
-    const response = await fetch(`${siteUrl}/api/analytics/overview`, {
-      cache: 'no-store',
-    });
-    if (!response.ok) return null;
-    return await response.json();
-  } catch {
-    return null;
-  }
-}
+import { getAnalyticsOverview } from '@/lib/analytics';
 
 export default async function AnalyticsOverviewPage() {
   const supabase = await createClient();
@@ -38,8 +13,7 @@ export default async function AnalyticsOverviewPage() {
     redirect('/login');
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const overview = await getOverview(siteUrl);
+  const overview = await getAnalyticsOverview(user.id);
 
   return (
     <div className="min-h-screen bg-muted/30">
