@@ -202,7 +202,8 @@ test.describe('Episode Upload', () => {
     });
 
     // Check for file size display
-    const fileSize = page.locator(/\d+\s*(bytes|KB|MB|GB)/).or(
+    // page.locator() only accepts strings; use getByText() for RegExp matching
+    const fileSize = page.getByText(/\d+\s*(bytes|KB|MB|GB)/).or(
       page.locator('[data-testid="file-size"]')
     );
 
