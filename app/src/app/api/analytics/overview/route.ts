@@ -8,8 +8,9 @@ import { createClient } from '@/lib/supabase/server';
  * - Total downloads and unique downloads across all podcasts
  * - Per-podcast breakdown with episode counts and download totals
  *
- * Aggregation is performed at the database level to avoid
- * loading all download rows into memory.
+ * Aggregation is performed in-memory after fetching episode and download
+ * rows for the user's podcasts. Suitable for current scale; migrate to
+ * a SQL aggregate query (RPC) if download volume becomes a concern.
  */
 export async function GET() {
   try {
