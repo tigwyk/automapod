@@ -83,7 +83,7 @@ export default async function PodcastsPage() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {podcasts.map((podcast: any) => (
+            {podcasts.map((podcast) => (
               <Link
                 key={podcast.id}
                 href={`/podcasts/${podcast.id}`}

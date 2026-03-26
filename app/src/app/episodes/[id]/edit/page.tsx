@@ -5,6 +5,18 @@ import { useRouter, useParams } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
+interface Episode {
+  id: string;
+  title: string;
+  description: string | null;
+  podcast_id: string | null;
+}
+
+interface Podcast {
+  id: string;
+  title: string;
+}
+
 async function getPodcasts() {
   const response = await fetch('/api/podcasts');
   if (!response.ok) {
@@ -55,8 +67,8 @@ export default function EditEpisodePage() {
   const params = useParams();
   const id = params.id as string;
 
-  const [episode, setEpisode] = useState<any>(null);
-  const [podcasts, setPodcasts] = useState<any[]>([]);
+  const [episode, setEpisode] = useState<Episode | null>(null);
+  const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +97,7 @@ export default function EditEpisodePage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!episode) return;
     setSaving(true);
     setError(null);
 

@@ -31,8 +31,8 @@ export default function RequestResetPage() {
 
       setMessage('If an account exists with that email, you will receive password reset instructions shortly.');
       setEmail('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to send reset email. Please try again.');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to send reset email. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export default function RequestResetPage() {
             Reset your password
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Enter your email address and we'll send you a link to reset your password
+            Enter your email address and we&apos;ll send you a link to reset your password
           </p>
         </div>
 

@@ -63,7 +63,25 @@ export async function GET(
   }
 }
 
-function generateRSSFeed(podcast: any, episodes: any[], requestUrl: string): string {
+interface PodcastRecord {
+  id: string;
+  rss_slug: string;
+  title: string;
+  description: string | null;
+  cover_image_url: string | null;
+  updated_at: string;
+}
+
+interface EpisodeRecord {
+  id: string;
+  title: string;
+  description: string | null;
+  audio_url: string | null;
+  created_at: string;
+  duration_seconds: number | null;
+}
+
+function generateRSSFeed(podcast: PodcastRecord, episodes: EpisodeRecord[], requestUrl: string): string {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://automapod.com';
   const podcastUrl = `${baseUrl}/podcasts/${podcast.id}`;
   const feedUrl = `${baseUrl}/rss/${podcast.rss_slug}`;
