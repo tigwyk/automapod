@@ -147,6 +147,7 @@ export default async function NewEpisodePage({ params }: Props) {
                 <Link href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Dashboard</Link>
                 <Link href="/podcasts" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Podcasts</Link>
                 <Link href={`/podcasts/${podcast.id}/episodes`} className="text-sm font-medium text-foreground hover:text-primary transition-colors">Episodes</Link>
+                <Link href="/analytics" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Analytics</Link>
               </div>
             </div>
           </div>
