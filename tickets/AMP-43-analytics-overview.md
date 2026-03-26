@@ -27,7 +27,7 @@ This ticket adds the missing analytics layer: a top-level overview page showing 
 ## Approach
 
 ### API: `GET /api/analytics/overview`
-Use a single Supabase query joining `podcasts → episodes → episode_downloads` to return aggregate counts per podcast. Use COUNT at the DB level — do not pull rows into JS.
+Fetch `podcasts`, `episodes`, and `episode_downloads` rows for the authenticated user and aggregate counts in-memory in JavaScript. Suitable for current scale; migrate to a SQL aggregate query (RPC / DB-level COUNT) via AMP-46 if download volume becomes a concern.
 
 ```typescript
 // Response shape
