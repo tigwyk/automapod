@@ -35,7 +35,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="card-elevated p-8">
           {successMessage === 'check_email' && (
             <div className="alert alert-success">
-              <strong>Check your email!</strong> We've sent you a verification link. Please verify your email before signing in.
+              <strong>Check your email!</strong> We&apos;ve sent you a verification link. Please verify your email before signing in.
             </div>
           )}
 

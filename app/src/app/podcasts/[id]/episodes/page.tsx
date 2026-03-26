@@ -143,7 +143,7 @@ export default async function PodcastEpisodesPage({ params }: Props) {
         ) : (
           <div className="card overflow-hidden">
             <ul className="divide-y divide-border">
-              {episodes.map((episode: any) => (
+              {episodes.map((episode) => (
                 <li key={episode.id}>
                   <Link href={`/podcasts/${podcast.id}/episodes/${episode.id}`} className="block hover:bg-muted/50 transition-colors">
                     <div className="px-6 py-4">

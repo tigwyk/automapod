@@ -32,9 +32,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error.message || 'Failed to send reset email' },
+      { error: error instanceof Error ? error.message : 'Failed to send reset email' },
       { status: 500 }
     );
   }
