@@ -41,6 +41,11 @@ function getR2Client(): S3Client {
         accessKeyId: config.accessKeyId,
         secretAccessKey: config.secretAccessKey,
       },
+      // AWS SDK v3 adds CRC32 checksums by default (WHEN_SUPPORTED).
+      // R2 does not support these and they break presigned PUT URLs,
+      // so we restrict checksums to only when strictly required.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
   }
   return r2Client;
