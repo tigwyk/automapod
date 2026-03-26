@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { UpgradePrompt } from '@/components/upgrade-prompt';
 
 type UploadPhase = 'idle' | 'presigning' | 'uploading' | 'saving' | 'error';
 
@@ -16,6 +17,7 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
   const [phase, setPhase] = useState<UploadPhase>('idle');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [upgradeReason, setUpgradeReason] = useState<string | null>(null);
   const abortRef = useRef<XMLHttpRequest | null>(null);
 
   const isSubmitting = phase !== 'idle' && phase !== 'error';
@@ -23,6 +25,7 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setUpgradeReason(null);
     setProgress(0);
 
     const form = e.currentTarget;
@@ -56,7 +59,12 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
       });
 
       if (!presignRes.ok) {
-        const json = await presignRes.json() as { error?: string };
+        const json = await presignRes.json() as { error?: string; upgradeRequired?: boolean };
+        if (json.upgradeRequired) {
+          setUpgradeReason(json.error ?? 'Upgrade required');
+          setPhase('error');
+          return;
+        }
         throw new Error(json.error ?? 'Failed to prepare upload');
       }
 
@@ -133,6 +141,10 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
           Add a new episode to <span className="font-semibold">{podcastTitle}</span>
         </p>
       </div>
+
+      {upgradeReason && (
+        <UpgradePrompt reason={upgradeReason} className="mb-4" />
+      )}
 
       {error && (
         <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4" role="alert">

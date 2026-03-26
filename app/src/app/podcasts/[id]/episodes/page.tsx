@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
+import { AppNav } from '@/components/app-nav';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ async function getPodcastEpisodes(podcastId: string) {
     .eq('podcast_id', podcastId)
     .order('created_at', { ascending: false });
 
-  return { podcast, episodes: episodes || [] };
+  return { podcast, episodes: episodes || [], userId: user.id };
 }
 
 export default async function PodcastEpisodesPage({ params }: Props) {
@@ -46,43 +47,23 @@ export default async function PodcastEpisodesPage({ params }: Props) {
     notFound();
   }
 
-  const { podcast, episodes } = result;
+  const { podcast, episodes, userId } = result;
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <nav className="bg-white border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-white/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center gap-8">
-              <Link href="/dashboard" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                  </svg>
-                </div>
-                <h1 className="text-xl font-bold text-foreground">AutomaPod</h1>
-              </Link>
-              <div className="hidden md:flex items-center gap-6">
-                <Link href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Dashboard</Link>
-                <Link href="/podcasts" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Podcasts</Link>
-                <Link href={`/podcasts/${podcast.id}/episodes`} className="text-sm font-medium text-foreground hover:text-primary transition-colors">Episodes</Link>
-                <Link href="/analytics" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Analytics</Link>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href={`/podcasts/${podcast.id}/episodes/new`}
-                className="btn btn-sm btn-primary"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Upload Episode
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AppNav
+        userId={userId}
+        activeLink="podcasts"
+        extraLinks={[{ href: `/podcasts/${podcast.id}/episodes`, label: 'Episodes', active: true }]}
+        actionSlot={
+          <Link href={`/podcasts/${podcast.id}/episodes/new`} className="btn btn-sm btn-primary">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Upload Episode
+          </Link>
+        }
+      />
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb Navigation */}

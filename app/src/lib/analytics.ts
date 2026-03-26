@@ -22,7 +22,8 @@ export type AnalyticsOverview = {
  * query (RPC) via AMP-46 if download volume becomes a concern.
  */
 export async function getAnalyticsOverview(
-  userId: string
+  userId: string,
+  windowDays: number | null = null
 ): Promise<AnalyticsOverview | null> {
   try {
     const supabase = await createClient();
@@ -53,10 +54,17 @@ export async function getAnalyticsOverview(
     // When there are no episodes, skip the query to avoid UUID syntax errors.
     let downloads: { episode_id: string; ip_hash: string }[] = [];
     if (allEpisodeIds.length > 0) {
-      const { data, error: downloadsError } = await supabase
+      let query = supabase
         .from('episode_downloads')
         .select('episode_id, ip_hash')
         .in('episode_id', allEpisodeIds);
+
+      if (windowDays !== null) {
+        const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString();
+        query = query.gte('created_at', since);
+      }
+
+      const { data, error: downloadsError } = await query;
       if (downloadsError) return null;
       downloads = data ?? [];
     }

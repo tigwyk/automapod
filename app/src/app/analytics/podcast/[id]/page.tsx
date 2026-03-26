@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { AppNav } from '@/components/app-nav';
 
 type PlatformBreakdown = {
   ios: number;
@@ -81,34 +82,7 @@ export default async function PodcastAnalyticsPage({
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Nav */}
-      <nav className="bg-white border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-white/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center gap-8">
-              <Link href="/dashboard" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                  </svg>
-                </div>
-                <h1 className="text-xl font-bold text-foreground">AutomaPod</h1>
-              </Link>
-              <div className="hidden md:flex items-center gap-6">
-                <Link href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Dashboard</Link>
-                <Link href="/podcasts" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Podcasts</Link>
-                <Link href="/analytics" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Analytics</Link>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground hidden sm:block">{user.email}</span>
-              <form action="/api/auth/signout" method="POST">
-                <button type="submit" className="btn btn-sm btn-outline">Sign Out</button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AppNav userId={user.id} userEmail={user.email} activeLink="analytics" />
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}

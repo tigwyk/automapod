@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { addTranscriptionJob, getTranscriptionJobState } from '@/lib/queue';
+import { getUserSubscription } from '@/lib/get-user-subscription';
+import { canTranscribe } from '@/lib/subscription';
 
 export const runtime = 'nodejs';
 
@@ -29,6 +31,16 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
+      );
+    }
+
+    // Subscription tier enforcement
+    const subscription = await getUserSubscription(user.id);
+    const transcribeCheck = canTranscribe(subscription);
+    if (!transcribeCheck.allowed) {
+      return NextResponse.json(
+        { error: transcribeCheck.reason, upgradeRequired: true },
+        { status: 403 }
       );
     }
 
