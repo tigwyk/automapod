@@ -351,7 +351,8 @@ test.describe('R2 File Retrieval and CDN', () => {
     expect(testFileUrl).toBeTruthy();
 
     // Test 1: Verify file retrieval and content integrity
-    const response = await request.get(testFileUrl);
+    // testFileUrl is asserted truthy above; non-null assertion is safe here
+    const response = await request.get(testFileUrl!);
     expect(response.status()).toBe(200);
 
     const retrievedContent = await response.body();
@@ -367,7 +368,7 @@ test.describe('R2 File Retrieval and CDN', () => {
     expect(headers['cache-control']).toBeDefined();
 
     // Test 3: Verify range request support
-    const rangeResponse = await request.get(testFileUrl, {
+    const rangeResponse = await request.get(testFileUrl!, {
       headers: { 'Range': 'bytes=0-99' },
     });
     expect(rangeResponse.status()).toBe(206);
@@ -377,7 +378,7 @@ test.describe('R2 File Retrieval and CDN', () => {
     expect(partialContent.length).toBeGreaterThan(0);
 
     // Test 4: Verify HEAD request support
-    const headResponse = await request.fetch(testFileUrl, { method: 'HEAD' });
+    const headResponse = await request.fetch(testFileUrl!, { method: 'HEAD' });
     expect(headResponse.status()).toBe(200);
     expect((await headResponse.body()).length).toBe(0);
     expect(headResponse.headers()['content-type']).toBeDefined();
