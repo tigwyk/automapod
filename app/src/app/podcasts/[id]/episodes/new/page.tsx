@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { uploadToR2, isValidAudioFile, isValidFileSize, getR2EpisodesCustomDomain } from '@/lib/r2';
 import { SimpleUploadForm } from '@/components/simple-upload-form';
 
 export const dynamic = 'force-dynamic';
@@ -26,99 +25,6 @@ async function getPodcast(podcastId: string) {
     .single();
 
   return podcast;
-}
-
-async function uploadEpisode(
-  prevState: { error?: string } | null,
-  podcastId: string,
-  formData: FormData
-): Promise<{ error?: string } | null> {
-  'use server';
-
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: 'You must be logged in to upload an episode' };
-  }
-
-  // Verify user owns this podcast
-  const { data: podcast } = await supabase
-    .from('podcasts')
-    .select('id')
-    .eq('id', podcastId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (!podcast) {
-    return { error: 'Podcast not found or access denied' };
-  }
-
-  const fileValue = formData.get('audio');
-  const title = formData.get('title') as string;
-  const description = formData.get('description') as string || '';
-
-  if (!title) {
-    return { error: 'Title is required' };
-  }
-
-  if (!(fileValue instanceof File) || fileValue.size === 0) {
-    return { error: 'Audio file is required' };
-  }
-
-  const file = fileValue;
-
-  // Validate file type
-  if (!isValidAudioFile(file)) {
-    return { error: 'Invalid file type. Please upload an audio file (MP3, M4A, WAV, or OGG)' };
-  }
-
-  // Validate file size (500MB max)
-  if (!isValidFileSize(file)) {
-    return { error: 'File size exceeds 500MB limit' };
-  }
-
-  // Generate a temporary episode ID for R2 upload path
-  const tempEpisodeId = crypto.randomUUID();
-
-  let audioUrl: string;
-  try {
-    // Upload to R2 first to get the audio URL
-    audioUrl = await uploadToR2(file, tempEpisodeId, file.name);
-  } catch (error) {
-    console.error('R2 upload failed:', error);
-    return { error: `Failed to upload audio file: ${error instanceof Error ? error.message : 'Unknown error'}` };
-  }
-
-  // Now create the episode record with the actual audio URL
-  const { data: episode, error: insertError } = await supabase
-    .from('episodes')
-    .insert({
-      title,
-      description,
-      audio_url: audioUrl,
-      duration_seconds: null,
-      transcript_status: 'pending',
-      podcast_id: podcastId,  // Always set - no standalone episodes
-    })
-    .select()
-    .single();
-
-  if (insertError || !episode) {
-    // If database insert fails, try to clean up the uploaded file
-    try {
-      const { deleteFromR2 } = await import('@/lib/r2');
-      if (audioUrl.startsWith(getR2EpisodesCustomDomain())) {
-        const key = audioUrl.replace(getR2EpisodesCustomDomain(), '').replace(/^\//, '');
-        await deleteFromR2(key);
-      }
-    } catch (cleanupError) {
-      console.error('Failed to cleanup R2 file after DB error:', cleanupError);
-    }
-    return { error: insertError?.message || 'Failed to create episode' };
-  }
-
-  redirect(`/podcasts/${podcastId}/episodes`);
 }
 
 export default async function NewEpisodePage({ params }: Props) {
@@ -178,10 +84,7 @@ export default async function NewEpisodePage({ params }: Props) {
 
         <SimpleUploadForm
           podcastTitle={podcast.title}
-          action={async (prevState, formData) => {
-            'use server';
-            return uploadEpisode(prevState, podcast.id, formData);
-          }}
+          podcastId={podcast.id}
           backUrl={`/podcasts/${podcast.id}/episodes`}
         />
       </main>
