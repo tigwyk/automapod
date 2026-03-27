@@ -7,6 +7,8 @@ import {
   isValidAudioFile,
   isValidFileSize,
 } from '@/lib/r2';
+import { getUserSubscription } from '@/lib/get-user-subscription';
+import { canUploadEpisode } from '@/lib/subscription';
 
 /**
  * POST /api/r2/presign
@@ -70,6 +72,24 @@ export async function POST(request: NextRequest) {
         { error: 'Podcast not found or access denied' },
         { status: 403 }
       );
+    }
+
+    // Subscription tier enforcement
+    const subscription = await getUserSubscription(user.id);
+
+    const { count: episodeCount, error: countError } = await supabase
+      .from('episodes')
+      .select('id', { count: 'exact', head: true })
+      .eq('podcast_id', podcastId);
+
+    if (countError) {
+      return NextResponse.json({ error: 'Failed to check episode limit' }, { status: 500 });
+    }
+
+    const fileSizeMb = Math.ceil(fileSize / (1024 * 1024));
+    const result = canUploadEpisode(subscription, episodeCount ?? 0, 0, fileSizeMb);
+    if (!result.allowed) {
+      return NextResponse.json({ error: result.reason, upgradeRequired: true }, { status: 403 });
     }
 
     const episodeId = crypto.randomUUID();

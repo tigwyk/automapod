@@ -13,7 +13,7 @@ import { resolve } from 'path';
 import { S3Client, PutBucketCorsCommand, GetBucketCorsCommand } from '@aws-sdk/client-s3';
 
 // Load .env.local from the app root
-config({ path: resolve(import.meta.dir, '../.env.local') });
+config({ path: resolve(process.cwd(), '.env.local') });
 
 function getRequiredEnv(name: string): string {
   const value = process.env[name]?.trim();

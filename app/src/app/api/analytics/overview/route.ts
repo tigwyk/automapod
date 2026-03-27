@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAnalyticsOverview } from '@/lib/analytics';
+import { getUserSubscription } from '@/lib/get-user-subscription';
+import { getAnalyticsWindowDays } from '@/lib/subscription';
 
 /**
  * GET /api/analytics/overview
@@ -25,7 +27,9 @@ export async function GET() {
       );
     }
 
-    const overview = await getAnalyticsOverview(user.id);
+    const subscription = await getUserSubscription(user.id);
+    const windowDays = getAnalyticsWindowDays(subscription);
+    const overview = await getAnalyticsOverview(user.id, windowDays);
 
     if (!overview) {
       return NextResponse.json(
