@@ -22,6 +22,11 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
 
   const isSubmitting = phase !== 'idle' && phase !== 'error';
 
+  function clearErrors() {
+    setError(null);
+    setUpgradeReason(null);
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -163,7 +168,7 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
       )}
 
       <div className="bg-white shadow rounded-lg p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} onChange={clearErrors} className="space-y-6">
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">
               Title <span className="text-red-500">*</span>
