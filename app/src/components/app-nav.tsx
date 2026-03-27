@@ -9,6 +9,7 @@
 import Link from 'next/link';
 import { getUserSubscription } from '@/lib/get-user-subscription';
 import { TrialBanner } from '@/components/trial-banner';
+import type { UserSubscription } from '@/lib/subscription';
 
 interface NavLink {
   href: string;
@@ -25,6 +26,11 @@ interface AppNavProps {
   extraLinks?: NavLink[];
   /** Action buttons shown to the left of user info in the right rail */
   actionSlot?: React.ReactNode;
+  /**
+   * Pre-fetched subscription — pass this when the calling page has already
+   * fetched the subscription to avoid a duplicate DB query.
+   */
+  subscription?: UserSubscription;
 }
 
 export async function AppNav({
@@ -33,8 +39,9 @@ export async function AppNav({
   activeLink,
   extraLinks = [],
   actionSlot,
+  subscription: subscriptionProp,
 }: AppNavProps) {
-  const subscription = await getUserSubscription(userId);
+  const subscription = subscriptionProp ?? (await getUserSubscription(userId));
   const isTrialing = subscription.status === 'trialing' && subscription.trialEndsAt !== null;
 
   const standardLinks: (NavLink & { key: AppNavProps['activeLink'] })[] = [

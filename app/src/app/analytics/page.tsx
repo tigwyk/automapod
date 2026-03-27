@@ -22,7 +22,7 @@ export default async function AnalyticsOverviewPage() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <AppNav userId={user.id} userEmail={user.email} activeLink="analytics" />
+      <AppNav userId={user.id} userEmail={user.email} activeLink="analytics" subscription={subscription} />
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}

@@ -61,7 +61,7 @@ export async function getAnalyticsOverview(
 
       if (windowDays !== null) {
         const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString();
-        query = query.gte('created_at', since);
+        query = query.gte('downloaded_at', since);
       }
 
       const { data, error: downloadsError } = await query;

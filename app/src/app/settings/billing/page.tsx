@@ -34,7 +34,7 @@ export default async function BillingPage({
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <AppNav userId={user.id} activeLink="billing" />
+      <AppNav userId={user.id} activeLink="billing" subscription={subscription} />
 
       <main className="max-w-3xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">Billing</h1>

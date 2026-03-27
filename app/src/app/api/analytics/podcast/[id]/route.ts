@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getUserSubscription } from '@/lib/get-user-subscription';
+import { getAnalyticsWindowDays } from '@/lib/subscription';
 
 /**
  * GET /api/analytics/podcast/:id
@@ -44,6 +46,9 @@ export async function GET(
       );
     }
 
+    const subscription = await getUserSubscription(user.id);
+    const windowDays = getAnalyticsWindowDays(subscription);
+
     // Verify user owns this podcast
     const { data: podcast, error: podcastError } = await supabase
       .from('podcasts')
@@ -85,14 +90,22 @@ export async function GET(
         platformBreakdown: { ios: 0, android: 0, web: 0, other: 0 },
         downloadsOverTime: buildEmptyTimeSeries(),
         topEpisodes: [],
+        windowDays,
       });
     }
 
-    // Fetch all downloads for this podcast's episodes in one query
-    const { data: downloads, error: downloadsError } = await supabase
+    // Fetch downloads for this podcast's episodes; apply tier window if needed
+    let downloadsQuery = supabase
       .from('episode_downloads')
       .select('episode_id, ip_hash, platform, downloaded_at')
       .in('episode_id', episodeIds);
+
+    if (windowDays !== null) {
+      const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString();
+      downloadsQuery = downloadsQuery.gte('downloaded_at', since);
+    }
+
+    const { data: downloads, error: downloadsError } = await downloadsQuery;
 
     if (downloadsError) {
       console.error('Error fetching downloads:', downloadsError);
@@ -176,6 +189,7 @@ export async function GET(
       platformBreakdown,
       downloadsOverTime,
       topEpisodes,
+      windowDays,
     });
   } catch (error) {
     console.error('Podcast analytics error:', error);
