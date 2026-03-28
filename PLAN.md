@@ -138,7 +138,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 - [x] Presigned R2 upload (browser → R2 direct, no server body limit)
 
 ### 6.3 Testing
-- [x] Playwright E2E test suite (85+ tests total)
+- [x] Playwright E2E test suite (95+ tests total)
 - [x] Authentication tests (14 tests)
 - [x] Dashboard tests (8 tests)
 - [x] Upload tests (9 tests)
@@ -212,18 +212,19 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 
 ---
 
-## Phase 8: Monetisation 📋 NEXT
+## Phase 8: Monetisation 🚧 IN PROGRESS
 
-### 8.1 Subscription / Billing (Priority)
-- [ ] Define tier structure (Free / Pro / Business) — use `/amp-pricing`
-- [ ] Stripe customer + subscription creation
-- [ ] Billing portal (manage plan, cancel, invoices)
-- [ ] Webhook handling (subscription created/updated/cancelled)
-- [ ] Tier enforcement (usage limits per plan)
-- [ ] Upgrade/downgrade flows in UI
+### 8.1 Subscription / Billing ✅ COMPLETE
+- [x] Define tier structure (Free / Pro / Business)
+- [x] Stripe customer + subscription creation
+- [x] Billing portal (manage plan, cancel, invoices)
+- [x] Webhook handling (subscription created/updated/cancelled)
+- [x] Tier enforcement (usage limits per plan)
+- [x] Upgrade/downgrade flows in UI
+- [x] Billing E2E tests (10 tests — AMP-50)
 
 ### 8.2 Enhanced Automation
-- [ ] BullMQ transcription worker — deploy as long-running process (not serverless)
+- [ ] BullMQ transcription worker — deploy as long-running process (not serverless) (AMP-51)
 - [ ] Automated deployment pipelines
 
 ### 8.3 Advanced Workflows (Optional)
@@ -287,4 +288,4 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 
 ---
 
-*Last updated: 2026-03-25 — Analytics dashboard complete (AMP-43/44/45). Upload fixed with presigned R2 URLs (AMP-47). TypeScript clean (AMP-46). Phase 8 reoriented to monetisation.*
+*Last updated: 2026-03-28 — Phase 8.1 billing complete (AMP-48/49/50): Stripe foundation, tier enforcement, 10/10 E2E tests. Phase 8.2 next: BullMQ worker (AMP-51).*
