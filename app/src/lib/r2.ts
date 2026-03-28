@@ -161,6 +161,9 @@ export function isValidAudioFile(file: File): boolean {
     'audio/wave',        // WAV (alternative)
     'audio/x-wav',       // WAV (alternative)
     'audio/ogg',         // OGG
+    'application/ogg',   // OGG (generic container, common browser/OS report)
+    'video/ogg',         // OGG (container MIME, some systems use for audio-only OGG)
+    'audio/x-ogg',       // OGG (alternative)
     'audio/webm',        // WebM Audio
     'audio/flac',        // FLAC
   ];
