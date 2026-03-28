@@ -19,9 +19,9 @@ test.describe('Pricing page', () => {
     await page.goto('/pricing');
 
     await expect(page.getByRole('heading', { name: 'Simple, honest pricing' })).toBeVisible();
-    await expect(page.locator('text=$0')).toBeVisible();
-    await expect(page.locator('text=$19')).toBeVisible();
-    await expect(page.locator('text=$49')).toBeVisible();
+    await expect(page.getByText('$0', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('$19', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('$49', { exact: true }).first()).toBeVisible();
   });
 
   test('shows feature comparison table', async ({ page }) => {
@@ -72,10 +72,10 @@ test.describe('Billing settings page (free user)', () => {
 
     // Plan limits section labels
     await expect(page.locator('dt', { hasText: 'Podcasts' })).toBeVisible();
-    await expect(page.locator('dd', { hasText: 'Up to 1' })).toBeVisible();
+    await expect(page.locator('dd').filter({ hasText: /^Up to 1$/ })).toBeVisible();
 
     await expect(page.locator('dt', { hasText: 'Episodes' })).toBeVisible();
-    await expect(page.locator('dd', { hasText: 'Up to 10' })).toBeVisible();
+    await expect(page.locator('dd').filter({ hasText: /^Up to 10$/ })).toBeVisible();
 
     await expect(page.locator('dt', { hasText: 'Storage' })).toBeVisible();
     await expect(page.locator('dd', { hasText: '500 MB' })).toBeVisible();

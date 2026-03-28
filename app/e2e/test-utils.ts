@@ -80,7 +80,7 @@ export async function setTestUserSubscription(
   patch: SubscriptionPatch
 ): Promise<void> {
   const supabase = getServiceRoleClient();
-  const { error } = await supabase.from('profiles').update(patch).eq('id', userId);
+  const { error } = await supabase.from('profiles').upsert({ id: userId, ...patch });
   if (error) throw new Error(`Failed to update subscription: ${error.message}`);
 }
 
