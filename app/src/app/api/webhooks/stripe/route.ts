@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { constructWebhookEvent, getTierFromPriceId, getStripe } from '@/lib/stripe';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import type { SubscriptionStatus, SubscriptionTier } from '@/lib/subscription';
+
+// Service role client — bypasses RLS for webhook writes (no user session in webhook context)
+function getServiceRoleClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!url || !key) throw new Error('Missing Supabase env vars');
+  return createClient(url, key);
+}
 
 /**
  * POST /api/webhooks/stripe
@@ -70,7 +78,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  const supabase = await createClient();
+  const supabase = getServiceRoleClient();
 
   // Save customer ID against the user
   await supabase
@@ -100,7 +108,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const periodEnd = subscription.items.data[0]?.current_period_end ?? null;
   const currentPeriodEnd = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
 
-  const supabase = await createClient();
+  const supabase = getServiceRoleClient();
   await supabase
     .from('profiles')
     .update({
@@ -117,7 +125,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const customerId = subscription.customer as string;
 
-  const supabase = await createClient();
+  const supabase = getServiceRoleClient();
   await supabase
     .from('profiles')
     .update({
@@ -135,7 +143,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
   if (!invoice.customer) return;
   const customerId = invoice.customer as string;
 
-  const supabase = await createClient();
+  const supabase = getServiceRoleClient();
   await supabase
     .from('profiles')
     .update({ subscription_status: 'past_due' })
