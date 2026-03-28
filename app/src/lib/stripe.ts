@@ -85,6 +85,7 @@ export async function createCheckoutSession(
     customer: options.customerId,
     mode: 'subscription',
     line_items: [{ price: options.priceId, quantity: 1 }],
+    metadata: { supabase_user_id: options.userId },
     subscription_data: {
       trial_period_days: options.trialDays,
       metadata: { supabase_user_id: options.userId },
