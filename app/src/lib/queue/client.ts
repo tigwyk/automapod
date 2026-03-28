@@ -4,25 +4,7 @@
 
 import { Queue } from 'bullmq';
 import type { TranscriptionJobData, TranscriptionJobOptions } from './types';
-
-/**
- * Creates a Redis connection options object for BullMQ
- *
- * TODO: Configure Redis connection based on environment
- * - Use REDIS_URL environment variable
- * - Fallback to localhost for development
- * - Add connection pooling for production
- */
-function createRedisOptions() {
-  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-
-  return {
-    host: redisUrl.includes('://')
-      ? redisUrl.split('://')[1]?.split(':')[0] || 'localhost'
-      : redisUrl,
-    port: parseInt(redisUrl.split(':')[2] || '6379', 10),
-  };
-}
+import { createRedisOptions } from './redis';
 
 /**
  * Transcription queue singleton

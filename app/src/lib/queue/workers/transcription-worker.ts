@@ -1,73 +1,49 @@
 /**
- * BullMQ worker for processing transcription jobs
+ * BullMQ worker for processing transcription jobs.
  *
- * TODO: Implement standalone worker process
- * - Create a separate entry point (e.g., workers/transcription.ts)
- * - Use a process manager (PM2, Docker) for production
- * - Add graceful shutdown handling
- * - Add health check endpoint
+ * Run as a standalone process:
+ *   bun run worker
  *
- * Run with: node dist/workers/transcription.js
+ * The worker connects to Redis, picks up transcription jobs, and calls
+ * the Groq Whisper API to transcribe each episode's audio file.
+ * It writes results directly to Supabase via the service role key,
+ * bypassing the Next.js SSR cookie-based auth client.
  */
 
 import { Worker } from 'bullmq';
-import Redis from 'ioredis';
 import { processTranscriptionJob } from '../jobs/transcription';
+import { createRedisOptions } from '../redis';
 
-/**
- * Create a Redis connection for the worker
- */
-function createRedisOptions() {
-  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-
-  return {
-    host: redisUrl.includes('://')
-      ? redisUrl.split('://')[1]?.split(':')[0] || 'localhost'
-      : redisUrl,
-    port: parseInt(redisUrl.split(':')[2] || '6379', 10),
-  };
-}
-
-/**
- * Create and start the transcription worker
- */
-export function createTranscriptionWorker(): Worker {
-  const connection = createRedisOptions();
-
+function createTranscriptionWorker(): Worker {
   const worker = new Worker(
     'transcription',
     async (job) => {
       return await processTranscriptionJob(job);
     },
     {
-      connection,
-      concurrency: 2, // Process 2 jobs concurrently
+      connection: createRedisOptions(),
+      concurrency: 2,
       limiter: {
-        max: 5, // Max 5 jobs per interval
-        duration: 60000, // Per minute
+        max: 5,
+        duration: 60_000,
       },
     }
   );
 
-  // Worker event handlers
   worker.on('completed', (job) => {
-    console.log(`Job ${job.id} completed for episode ${job.data.episodeId}`);
+    console.log(`[transcription] job ${job.id} completed — episode ${job.data.episodeId}`);
   });
 
   worker.on('failed', (job, error) => {
-    console.error(
-      `Job ${job?.id} failed for episode ${job?.data.episodeId}:`,
-      error.message
-    );
+    console.error(`[transcription] job ${job?.id} failed — episode ${job?.data.episodeId}:`, error.message);
   });
 
   worker.on('progress', (job, progress) => {
-    console.log(`Job ${job?.id} progress: ${progress}%`);
+    console.log(`[transcription] job ${job?.id} progress: ${progress}%`);
   });
 
-  // Graceful shutdown
   const shutdown = async () => {
-    console.log('Closing transcription worker...');
+    console.log('[transcription] shutting down worker...');
     await worker.close();
     process.exit(0);
   };
@@ -78,11 +54,4 @@ export function createTranscriptionWorker(): Worker {
   return worker;
 }
 
-/**
- * Start the worker if this file is run directly
- * TODO: Move to a separate entry point file
- */
-if (require.main === module) {
-  const worker = createTranscriptionWorker();
-  console.log('Transcription worker started, waiting for jobs...');
-}
+export { createTranscriptionWorker };
