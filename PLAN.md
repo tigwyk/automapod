@@ -212,7 +212,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 
 ---
 
-## Phase 8: Monetisation 🚧 IN PROGRESS
+## Phase 8: Monetisation ✅ COMPLETE
 
 ### 8.1 Subscription / Billing ✅ COMPLETE
 - [x] Define tier structure (Free / Pro / Business)
@@ -223,9 +223,10 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 - [x] Upgrade/downgrade flows in UI
 - [x] Billing E2E tests (10 tests — AMP-50)
 
-### 8.2 Enhanced Automation
-- [ ] BullMQ transcription worker — deploy as long-running process (not serverless) (AMP-51)
-- [ ] Automated deployment pipelines
+### 8.2 Enhanced Automation ✅ COMPLETE
+- [x] BullMQ transcription worker — standalone bun process, shared Redis helper, service role Supabase client (AMP-51)
+- [x] Backfill profiles rows for pre-migration users (AMP-52)
+- [x] Supabase CLI config committed, supabase/.temp gitignored (AMP-53)
 
 ### 8.3 Advanced Workflows (Optional)
 - [ ] Multi-worktree parallel development execution
@@ -288,4 +289,4 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete system design.
 
 ---
 
-*Last updated: 2026-03-28 — Phase 8.1 billing complete (AMP-48/49/50): Stripe foundation, tier enforcement, 10/10 E2E tests. Phase 8.2 next: BullMQ worker (AMP-51).*
+*Last updated: 2026-03-28 — Phase 8 complete: billing (AMP-48/49/50), BullMQ worker (AMP-51), profiles backfill (AMP-52), Supabase CLI config (AMP-53). App is production-ready for beta users.*
