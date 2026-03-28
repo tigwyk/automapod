@@ -6,6 +6,7 @@ import { getUserSubscription } from '@/lib/get-user-subscription';
 import { TIER_LABELS, TIER_LIMITS, TIER_PRICES, getEffectiveTier } from '@/lib/subscription';
 import { OpenPortalButton } from '@/components/open-portal-button';
 import { StartTrialButton } from '@/components/start-trial-button';
+import { BillingSuccessRefresh } from '@/components/billing-success-refresh';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Billing — AutomaPod' };
@@ -41,9 +42,12 @@ export default async function BillingPage({
         <p className="text-muted-foreground mb-8">Manage your plan and subscription.</p>
 
         {justSubscribed && (
-          <div className="mb-6 rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800 font-medium">
-            🎉 Welcome to AutomaPod {TIER_LABELS[effectiveTier]}! Your trial has started.
-          </div>
+          <>
+            <BillingSuccessRefresh />
+            <div className="mb-6 rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800 font-medium">
+              🎉 Welcome to AutomaPod {TIER_LABELS[effectiveTier]}! Your trial has started.
+            </div>
+          </>
         )}
 
         {/* Current plan */}

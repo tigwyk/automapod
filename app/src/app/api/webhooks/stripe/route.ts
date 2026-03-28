@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { constructWebhookEvent, getTierFromPriceId } from '@/lib/stripe';
+import { constructWebhookEvent, getTierFromPriceId, getStripe } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 import type { SubscriptionStatus, SubscriptionTier } from '@/lib/subscription';
 
@@ -62,14 +62,23 @@ async function handleEvent(event: Stripe.Event) {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  if (session.mode !== 'subscription' || !session.customer) return;
+  if (session.mode !== 'subscription' || !session.customer || !session.subscription) return;
 
   const supabase = await createClient();
+
+  // Save customer ID against the user
   await supabase
     .from('profiles')
     .update({ stripe_customer_id: session.customer as string })
     .eq('id', session.metadata?.supabase_user_id ?? '')
     .throwOnError();
+
+  // Immediately sync the subscription so the billing page reflects the new
+  // tier without waiting for the separate customer.subscription.created event
+  const subscription = await getStripe().subscriptions.retrieve(
+    session.subscription as string
+  );
+  await handleSubscriptionUpdated(subscription);
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
