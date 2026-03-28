@@ -5,8 +5,28 @@
 
 import { Job } from 'bullmq';
 import Groq from 'groq-sdk';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import type { TranscriptionJobData, TranscriptionJobResult } from '../types';
+
+/** Service-role client for direct DB writes from the worker process. */
+function getSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl) {
+    throw new Error(
+      'Missing NEXT_PUBLIC_SUPABASE_URL environment variable for Supabase client in transcription worker'
+    );
+  }
+
+  if (!serviceRoleKey) {
+    throw new Error(
+      'Missing SUPABASE_SERVICE_ROLE_KEY environment variable for Supabase client in transcription worker'
+    );
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey);
+}
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -52,7 +72,7 @@ export async function processTranscriptionJob(
 
   job.updateProgress(10);
 
-  const supabase = await createClient();
+  const supabase = getSupabase();
 
   try {
     // Validate input
