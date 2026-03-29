@@ -69,7 +69,8 @@ async function transcribeAudio(audioFile: File): Promise<string> {
  * 4. Updates episode status
  */
 export async function processTranscriptionJob(
-  data: TranscriptionJobData
+  data: TranscriptionJobData,
+  options?: { isFinalAttempt?: boolean }
 ): Promise<TranscriptionJobResult> {
   const { episodeId, audioUrl, title } = data;
 
@@ -119,10 +120,12 @@ export async function processTranscriptionJob(
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`[transcription] Failed for ${title}: ${errorMessage}`);
 
-    // Reset episode status on failure
+    // On final attempt write 'failed' so the UI surfaces the error;
+    // on intermediate retries reset to 'pending' so Inngest can retry cleanly.
+    const failureStatus = options?.isFinalAttempt ? 'failed' : 'pending';
     await supabase
       .from('episodes')
-      .update({ transcript_status: 'pending' })
+      .update({ transcript_status: failureStatus })
       .eq('id', episodeId);
 
     throw error;

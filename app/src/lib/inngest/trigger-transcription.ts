@@ -35,6 +35,7 @@ export async function maybeTriggerTranscription(
       .eq('id', episode.id);
 
     await inngest.send({
+      id: `transcribe-${episode.id}`, // deduplication key — prevents duplicate jobs if called twice for the same episode
       name: 'episode/transcribe.requested',
       data: {
         episodeId: episode.id,
