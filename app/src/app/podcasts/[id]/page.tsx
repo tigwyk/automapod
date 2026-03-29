@@ -105,10 +105,21 @@ export default async function PodcastDetailPage({
 
   const { podcast, userId } = result;
 
-  const headersList = await headers();
-  const host = headersList.get('x-forwarded-host') ?? headersList.get('host') ?? 'localhost:3000';
-  const proto = headersList.get('x-forwarded-proto') ?? 'http';
-  const feedUrl = `${proto}://${host}/rss/${podcast.rss_slug}`;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  let baseUrl: string;
+
+  if (siteUrl) {
+    baseUrl = siteUrl.replace(/\/+$/, '');
+  } else {
+    const headersList = await headers();
+    const forwardedProto = headersList.get('x-forwarded-proto')?.split(',')[0].trim();
+    const forwardedHost = headersList.get('x-forwarded-host')?.split(',')[0].trim();
+    const host = forwardedHost ?? headersList.get('host') ?? 'localhost:3000';
+    const proto = forwardedProto ?? 'http';
+    baseUrl = `${proto}://${host}`;
+  }
+
+  const feedUrl = `${baseUrl}/rss/${podcast.rss_slug}`;
 
   return (
     <div className="min-h-screen bg-muted/30">

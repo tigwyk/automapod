@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface RssFeedPanelProps {
   feedUrl: string;
@@ -8,11 +8,54 @@ interface RssFeedPanelProps {
 
 export function RssFeedPanel({ feedUrl }: RssFeedPanelProps) {
   const [copied, setCopied] = useState(false);
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current !== null) {
+        clearTimeout(resetTimerRef.current);
+      }
+    };
+  }, []);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(feedUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    let copiedSuccessfully = false;
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(feedUrl);
+        copiedSuccessfully = true;
+      } catch {
+        // fall through to execCommand fallback
+      }
+    }
+
+    if (!copiedSuccessfully && typeof document !== 'undefined') {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = feedUrl;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy'); // deprecated but retained for older browser/permission fallback
+        document.body.removeChild(textarea);
+        copiedSuccessfully = true;
+      } catch {
+        // fallback also failed
+      }
+    }
+
+    if (copiedSuccessfully) {
+      setCopied(true);
+      if (resetTimerRef.current !== null) {
+        clearTimeout(resetTimerRef.current);
+      }
+      resetTimerRef.current = setTimeout(() => setCopied(false), 2000);
+    } else if (typeof window !== 'undefined') {
+      window.alert('Unable to copy the RSS feed URL. Please copy it manually.');
+    }
   }
 
   return (
@@ -32,6 +75,7 @@ export function RssFeedPanel({ feedUrl }: RssFeedPanelProps) {
           type="text"
           readOnly
           value={feedUrl}
+          aria-label="RSS feed URL"
           data-testid="rss-feed-url"
           className="input flex-1 font-mono text-sm bg-muted/50"
           onFocus={(e) => e.target.select()}

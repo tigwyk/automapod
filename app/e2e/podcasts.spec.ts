@@ -252,6 +252,44 @@ test.describe('Podcast Management', () => {
     }
   });
 
+  test('should display RSS feed panel on podcast detail page', async ({ page }) => {
+    const testData = generateTestData();
+
+    // Create a podcast first
+    await page.goto('/podcasts/new');
+    await page.fill('input#title', testData.title);
+    await page.fill('textarea#description', testData.description);
+    await page.click('button[type="submit"]');
+
+    // Wait for redirect to the podcasts list
+    try {
+      await page.waitForURL('/podcasts', { timeout: 10000 });
+    } catch {
+      // Creation may have failed - skip the rest of the test
+      expect(page.url()).not.toContain('/podcasts/new');
+      return;
+    }
+
+    // Verify the podcast appears in the list and navigate to detail page
+    await expect(page.locator(`text=${testData.title}`)).toBeVisible({ timeout: 5000 });
+    await page.click(`text=${testData.title}`);
+    await page.waitForURL(/\/podcasts\/[a-f0-9-]+/, { timeout: 5000 });
+
+    // Verify RSS feed URL input is visible and populated
+    const feedUrlInput = page.getByTestId('rss-feed-url');
+    await expect(feedUrlInput).toBeVisible();
+    const feedUrlValue = await feedUrlInput.inputValue();
+    expect(feedUrlValue).toMatch(/\/rss\//);
+
+    // Verify copy button is visible
+    const copyButton = page.getByTestId('copy-rss-url');
+    await expect(copyButton).toBeVisible();
+
+    // Verify directory submission links are present
+    await expect(page.locator('a[href*="podcastsconnect.apple.com"]')).toBeVisible();
+    await expect(page.locator('a[href*="podcasters.spotify.com"]')).toBeVisible();
+  });
+
   test('should navigate from dashboard to podcasts', async ({ page }) => {
     // Start at dashboard
     await page.goto('/dashboard');
