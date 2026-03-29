@@ -53,7 +53,7 @@ async function transcribeAudio(audioFile: File): Promise<string> {
   const transcription = await groq.audio.transcriptions.create({
     file: audioFile,
     model: 'whisper-large-v3',
-    response_format: 'text',
+    response_format: 'json',
   });
 
   return transcription.text;

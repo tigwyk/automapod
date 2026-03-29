@@ -13,17 +13,17 @@
     "test:prod": "playwright test --config=playwright.prod.config.ts",
     "test:prod:ui": "playwright test --config=playwright.prod.config.ts --ui",
     "setup:cors": "bun run scripts/setup-r2-cors.ts",
-    "worker": "bun run scripts/worker.ts"
+    "dev:inngest": "bunx inngest-cli@latest dev",
+    "dev:inngest2": "npx inngest-cli@latest dev"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1009.0",
     "@aws-sdk/s3-request-presigner": "^3.1017.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.4",
-    "bullmq": "^5.71.0",
     "dotenv": "^17.3.1",
     "groq-sdk": "^0.9.0",
-    "ioredis": "^5.10.0",
+    "inngest": "^4.1.0",
     "next": "15.5.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -32,7 +32,6 @@
   "devDependencies": {
     "@playwright/test": "^1.50.1",
     "@tailwindcss/postcss": "^4.2.1",
-    "@types/ioredis": "^4.28.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
