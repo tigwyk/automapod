@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { PodcastForm } from '@/components/podcast-form';
 import { DeletePodcastButton } from '@/components/delete-podcast-button';
+import { RssFeedPanel } from '@/components/rss-feed-panel';
 import Link from 'next/link';
 import { AppNav } from '@/components/app-nav';
 
@@ -103,6 +105,22 @@ export default async function PodcastDetailPage({
 
   const { podcast, userId } = result;
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  let baseUrl: string;
+
+  if (siteUrl) {
+    baseUrl = siteUrl.replace(/\/+$/, '');
+  } else {
+    const headersList = await headers();
+    const forwardedProto = headersList.get('x-forwarded-proto')?.split(',')[0].trim();
+    const forwardedHost = headersList.get('x-forwarded-host')?.split(',')[0].trim();
+    const host = forwardedHost ?? headersList.get('host') ?? 'localhost:3000';
+    const proto = forwardedProto ?? 'http';
+    baseUrl = `${proto}://${host}`;
+  }
+
+  const feedUrl = `${baseUrl}/rss/${podcast.rss_slug}`;
+
   return (
     <div className="min-h-screen bg-muted/30">
       <AppNav
@@ -156,6 +174,8 @@ export default async function PodcastDetailPage({
         </div>
 
         <PodcastForm podcast={podcast} action={updatePodcast} podcastId={id} />
+
+        <RssFeedPanel feedUrl={feedUrl} />
 
         <div className="mt-8 card-elevated p-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">Danger Zone</h2>
