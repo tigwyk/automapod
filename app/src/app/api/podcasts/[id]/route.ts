@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { deleteFromR2, getR2EpisodesCustomDomain } from '@/lib/r2';
 
 export async function GET(
   request: NextRequest,
@@ -123,24 +124,44 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const { data: episodes, error: checkError } = await supabase
-      .from('episodes')
-      .select('id')
-      .eq('podcast_id', id)
-      .limit(1);
 
-    if (checkError) {
-      console.error('Error checking episodes:', checkError);
-      return NextResponse.json({ error: 'Failed to check podcast episodes' }, { status: 500 });
+    // Verify the podcast belongs to the user before doing anything
+    const { data: podcast, error: podcastError } = await supabase
+      .from('podcasts')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (podcastError || !podcast) {
+      return NextResponse.json({ error: 'Podcast not found' }, { status: 404 });
     }
 
+    // Fetch all episodes so we can clean up R2 files
+    const { data: episodes, error: episodesError } = await supabase
+      .from('episodes')
+      .select('id, audio_url')
+      .eq('podcast_id', id);
+
+    if (episodesError) {
+      console.error('Error fetching episodes for podcast:', episodesError);
+      return NextResponse.json({ error: 'Failed to fetch podcast episodes' }, { status: 500 });
+    }
+
+    // Delete R2 audio files for all episodes (best-effort, non-blocking)
     if (episodes && episodes.length > 0) {
-      return NextResponse.json(
-        { error: 'Cannot delete podcast with episodes. Delete episodes first.' },
-        { status: 400 }
+      const r2CustomDomain = getR2EpisodesCustomDomain();
+      await Promise.allSettled(
+        episodes
+          .filter((ep) => ep.audio_url && r2CustomDomain && ep.audio_url.startsWith(r2CustomDomain))
+          .map((ep) => {
+            const key = ep.audio_url.replace(r2CustomDomain!, '').replace(/^\//, '');
+            return deleteFromR2(key);
+          })
       );
     }
 
+    // Deleting the podcast cascades to episodes in the DB (ON DELETE CASCADE)
     const { error } = await supabase
       .from('podcasts')
       .delete()

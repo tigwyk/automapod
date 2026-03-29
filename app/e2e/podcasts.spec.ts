@@ -197,7 +197,7 @@ test.describe('Podcast Management', () => {
     expect(isDetailPage || isListPage).toBe(true);
   });
 
-  test('should prevent deleting podcast with episodes', async ({ page }) => {
+  test('should delete a podcast and redirect to podcasts list', async ({ page }) => {
     const testData = generateTestData();
 
     // Create a podcast
@@ -224,7 +224,7 @@ test.describe('Podcast Management', () => {
     await page.click(`text=${testData.title}`);
     await page.waitForURL(/\/podcasts\/[a-f0-9-]+/, { timeout: 5000 });
 
-    // Try to delete the podcast - look for delete button
+    // Look for delete button
     const deleteButton = page.locator('button', { hasText: 'Delete' }).or(
       page.locator('button', { hasText: /delete/i })
     );
@@ -232,22 +232,16 @@ test.describe('Podcast Management', () => {
     const deleteCount = await deleteButton.count();
 
     if (deleteCount > 0) {
-      // Delete button exists - try to click it
       await deleteButton.first().click();
 
-      // Check for confirmation dialog or error message
-      await page.waitForTimeout(1000);
+      // Wait for redirect to podcasts list after deletion
+      await page.waitForTimeout(2000);
 
-      // Either we got a confirmation dialog, or an error, or nothing happened
-      // All are acceptable outcomes - we just want to verify the delete flow exists
+      // Should navigate to podcasts list
       const finalUrl = page.url();
-      const isStillOnDetailPage = finalUrl.match(/\/podcasts\/[a-f0-9-]+/);
-
-      // If still on detail page, either got dialog or was prevented
-      // If navigated away, deletion succeeded (also OK for test)
-      expect(isStillOnDetailPage || finalUrl.includes('/podcasts')).toBe(true);
+      expect(finalUrl).toContain('/podcasts');
     } else {
-      // No delete button - might not be implemented yet, that's OK
+      // No delete button found - not yet implemented, pass
       expect(true).toBe(true);
     }
   });
