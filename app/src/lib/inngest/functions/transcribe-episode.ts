@@ -5,7 +5,7 @@ import type { TranscriptionJobData } from '@/lib/queue/types';
 const MAX_ATTEMPTS = 3; // must match retries: 3
 
 export const transcribeEpisodeFunction = inngest.createFunction(
-  { id: 'transcribe-episode', retries: MAX_ATTEMPTS, triggers: [{ event: 'episode/transcribe.requested' }] },
+  { id: 'transcribe-episode', retries: MAX_ATTEMPTS, triggers: { event: 'episode/transcribe.requested' } },
   async ({ event, step, attempt }) => {
     const data = event.data as TranscriptionJobData;
 
