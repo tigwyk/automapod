@@ -82,7 +82,7 @@ interface EpisodeRecord {
 }
 
 function generateRSSFeed(podcast: PodcastRecord, episodes: EpisodeRecord[], requestUrl: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://automapod.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://www.automapod.app';
   const podcastUrl = `${baseUrl}/podcasts/${podcast.id}`;
   const feedUrl = `${baseUrl}/rss/${podcast.rss_slug}`;
 
@@ -136,7 +136,7 @@ function generateRSSFeed(podcast: PodcastRecord, episodes: EpisodeRecord[], requ
     <itunes:summary><![CDATA[${podcast.description || ''}]]></itunes:summary>
     <itunes:owner>
       <itunes:name><![CDATA[${podcast.title}]]></itunes:name>
-      <itunes:email>${podcast.id}@automapod.com</itunes:email>
+      <itunes:email>${podcast.id}@automapod.app</itunes:email>
     </itunes:owner>
     <itunes:image href="${podcast.cover_image_url || `${baseUrl}/default-cover.jpg`}"/>
     <itunes:category text="Technology"/>

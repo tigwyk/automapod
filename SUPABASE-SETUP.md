@@ -10,10 +10,10 @@ In your Supabase project dashboard:
 
 1. Go to **Settings** → **Authentication** → **URL Configuration**
 2. Set **Site URL** to your production URL:
-   - Production: `https://automapod.app`
+   - Production: `https://www.automapod.app`
    - Development: `http://localhost:3000`
 3. Add allowed redirect URLs under **Redirect URLs**:
-   - `https://automapod.app/auth/callback`
+   - `https://www.automapod.app/auth/callback`
    - `http://localhost:3000/auth/callback`
 
 ### 2. Email Templates
@@ -29,7 +29,7 @@ Make sure these are set in your `.env.local` file:
 ```bash
 # Site URL for redirects and callbacks
 NEXT_PUBLIC_SITE_URL=http://localhost:3000  # Development
-# NEXT_PUBLIC_SITE_URL=https://automapod.app  # Production
+# NEXT_PUBLIC_SITE_URL=https://www.automapod.app  # Production
 
 # Alternative URL (used in some contexts)
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -40,7 +40,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 When deploying to Vercel:
 
 1. Add `NEXT_PUBLIC_SITE_URL` as an environment variable in Vercel:
-   - Value: `https://automapod.app`
+   - Value: `https://www.automapod.app`
 2. Update the Site URL in Supabase dashboard to match
 3. Ensure `/auth/callback` is in the allowed redirect URLs list
 
