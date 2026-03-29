@@ -3,12 +3,11 @@
  * Handles audio transcription using Groq Whisper API
  */
 
-import { Job } from 'bullmq';
 import Groq from 'groq-sdk';
 import { createClient } from '@supabase/supabase-js';
 import type { TranscriptionJobData, TranscriptionJobResult } from '../types';
 
-/** Service-role client for direct DB writes from the worker process. */
+/** Service-role client for direct DB writes, bypassing RLS. */
 function getSupabase() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -31,7 +30,9 @@ function getSupabase() {
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 /**
- * Download audio from URL and convert to File
+ * Download audio from URL and convert to File.
+ * Preserves the filename and content-type from the response so Groq
+ * receives the correct format metadata.
  */
 async function downloadAudioFile(audioUrl: string): Promise<File> {
   const response = await fetch(audioUrl);
@@ -40,7 +41,9 @@ async function downloadAudioFile(audioUrl: string): Promise<File> {
   }
 
   const audioBlob = await response.blob();
-  return new File([audioBlob], 'audio.mp3', { type: 'audio/mpeg' });
+  const filename = new URL(audioUrl).pathname.split('/').pop() || 'audio';
+  const contentType = response.headers.get('content-type') || audioBlob.type || 'audio/mpeg';
+  return new File([audioBlob], filename, { type: contentType });
 }
 
 /**
@@ -66,11 +69,9 @@ async function transcribeAudio(audioFile: File): Promise<string> {
  * 4. Updates episode status
  */
 export async function processTranscriptionJob(
-  job: Job<TranscriptionJobData>
+  data: TranscriptionJobData
 ): Promise<TranscriptionJobResult> {
-  const { episodeId, audioUrl, title } = job.data;
-
-  job.updateProgress(10);
+  const { episodeId, audioUrl, title } = data;
 
   const supabase = getSupabase();
 
@@ -80,8 +81,6 @@ export async function processTranscriptionJob(
       throw new Error('Episode has no audio URL to transcribe');
     }
 
-    job.updateProgress(20);
-
     // Update status to processing
     await supabase
       .from('episodes')
@@ -89,16 +88,12 @@ export async function processTranscriptionJob(
       .eq('id', episodeId);
 
     // Download audio file
-    job.log(`Downloading audio for: ${title}`);
+    console.log(`[transcription] Downloading audio for: ${title}`);
     const audioFile = await downloadAudioFile(audioUrl);
 
-    job.updateProgress(40);
-
     // Transcribe audio
-    job.log(`Starting transcription for: ${title}`);
+    console.log(`[transcription] Starting transcription for: ${title}`);
     const transcript = await transcribeAudio(audioFile);
-
-    job.updateProgress(90);
 
     // Save transcript to database
     const { error: updateError } = await supabase
@@ -113,8 +108,7 @@ export async function processTranscriptionJob(
       throw new Error(`Failed to save transcript: ${updateError.message}`);
     }
 
-    job.updateProgress(100);
-    job.log(`Transcription completed for: ${title}`);
+    console.log(`[transcription] Completed for: ${title}`);
 
     return {
       episodeId,
@@ -123,7 +117,7 @@ export async function processTranscriptionJob(
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    job.log(`Transcription failed: ${errorMessage}`);
+    console.error(`[transcription] Failed for ${title}: ${errorMessage}`);
 
     // Reset episode status on failure
     await supabase

@@ -1,5 +1,5 @@
 /**
- * Types for the transcription job queue
+ * Types for the transcription job
  */
 
 export interface TranscriptionJobData {
@@ -14,14 +14,3 @@ export interface TranscriptionJobResult {
   transcript: string;
   duration?: number;
 }
-
-export interface TranscriptionJobOptions {
-  attempts?: number;
-  backoff?: {
-    type: 'exponential' | 'fixed';
-    delay: number;
-  };
-  delay?: number;
-}
-
-export const TRANSCRIPTION_QUEUE_NAME = 'transcription';

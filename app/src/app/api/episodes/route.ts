@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { maybeTriggerTranscription } from '@/lib/inngest/trigger-transcription';
 
 /**
  * POST /api/episodes
@@ -72,6 +73,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Auto-trigger transcription if the user's subscription allows it
+    await maybeTriggerTranscription(supabase, user.id, episode);
 
     return NextResponse.json({ episode }, { status: 201 });
   } catch (error) {

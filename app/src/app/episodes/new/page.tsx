@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { uploadToR2, isValidAudioFile, isValidFileSize, getR2EpisodesCustomDomain } from '@/lib/r2';
 import { UploadForm } from '@/components/upload-form';
+import { maybeTriggerTranscription } from '@/lib/inngest/trigger-transcription';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,6 +117,9 @@ async function uploadEpisode(
     }
     return { error: insertError?.message || 'Failed to create episode' };
   }
+
+  // Auto-trigger transcription if the user's subscription allows it
+  await maybeTriggerTranscription(supabase, user.id, episode);
 
   redirect('/episodes');
 }
