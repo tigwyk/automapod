@@ -168,7 +168,7 @@ const PIXEL_GIF = Buffer.from(
 
 Or use tracking prefix:
 ```xml
-<enclosure url="https://automapod.app/api/track/download?episodeId=uuid&redirect=1"
+<enclosure url="https://www.automapod.app/api/track/download?episodeId=uuid&redirect=1"
   length="12345678" type="audio/mpeg"/>
 ```
 

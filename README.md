@@ -140,7 +140,7 @@ See `companyos/` for details.
 
 ## 📧 Contact
 
-- **Website**: https://automapod.app
+- **Website**: https://www.automapod.app
 - **Email**: support@automapod.app
 - **GitHub**: https://github.com/your-org/automapod-business
 
