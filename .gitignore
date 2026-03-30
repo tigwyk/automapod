@@ -75,3 +75,4 @@ bb0da4fb-*/
 
 # Memory (optional - commit updates periodically)
 # memory/
+.env*.local
