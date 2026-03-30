@@ -113,7 +113,7 @@ export async function PATCH(
       ...(placement as AdPlacement),
       episode_title: episode.title,
       creative_name: placementWithDetails.ad_creatives?.name,
-      campaign_name: placementWithDetails.ad_creatives?.ad_campaigns?.[0]?.name,
+      campaign_name: placementWithDetails.ad_creatives?.ad_campaigns[0]?.name,
     }
 
     return NextResponse.json({ placement: response })

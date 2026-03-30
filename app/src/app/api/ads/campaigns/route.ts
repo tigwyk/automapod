@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     const response: CampaignResponse[] = (campaigns as AdCampaignWithCounts[]).map((campaign) => ({
       ...campaign,
-      creatives_count: campaign.ad_creatives?.[0]?.count ?? 0,
+      creatives_count: campaign.ad_creatives[0]?.count ?? 0,
       placements_count: campaign.ad_placements?.[0]?.count ?? 0,
     }))
 

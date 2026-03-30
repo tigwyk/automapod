@@ -59,7 +59,7 @@ export async function GET(
     const campaignWithCounts = campaign as AdCampaignWithCounts
     const response: CampaignResponse = {
       ...(campaign as AdCampaign),
-      creatives_count: campaignWithCounts.ad_creatives?.[0]?.count ?? 0,
+      creatives_count: campaignWithCounts.ad_creatives[0]?.count ?? 0,
       placements_count: campaignWithCounts.ad_placements?.[0]?.count ?? 0,
     }
 

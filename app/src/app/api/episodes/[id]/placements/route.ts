@@ -85,7 +85,7 @@ export async function GET(
       ...placement,
       episode_title: episode.title,
       creative_name: placement.ad_creatives?.name,
-      campaign_name: placement.ad_creatives?.ad_campaigns?.[0]?.name,
+      campaign_name: placement.ad_creatives?.ad_campaigns[0]?.name,
     }))
 
     return NextResponse.json({ placements: response })
@@ -215,7 +215,7 @@ export async function POST(
       ...(placement as AdPlacement),
       episode_title: episode.title,
       creative_name: placementWithDetails.ad_creatives?.name,
-      campaign_name: placementWithDetails.ad_creatives?.ad_campaigns?.[0]?.name,
+      campaign_name: placementWithDetails.ad_creatives?.ad_campaigns[0]?.name,
     }
 
     return NextResponse.json({ placement: response }, { status: 201 })

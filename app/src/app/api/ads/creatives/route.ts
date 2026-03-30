@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 
     const response: CreativeResponse[] = (creatives as AdCreativeWithCampaignName[]).map((creative) => ({
       ...creative,
-      campaign_name: creative.ad_campaigns?.[0]?.name,
+      campaign_name: creative.ad_campaigns[0]?.name,
     }))
 
     return NextResponse.json({ creatives: response })
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     const creativeWithCampaignName = creative as AdCreativeWithCampaignName
     const response: CreativeResponse = {
       ...(creative as AdCreative),
-      campaign_name: creativeWithCampaignName.ad_campaigns?.[0]?.name,
+      campaign_name: creativeWithCampaignName.ad_campaigns[0]?.name,
     }
 
     return NextResponse.json({ creative: response }, { status: 201 })
