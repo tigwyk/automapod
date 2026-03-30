@@ -7,6 +7,7 @@ import type {
   CampaignResponse,
   AdCampaign,
   AdCampaignUpdate,
+  AdCampaignWithCounts,
 } from '@/lib/types'
 
 const supabase = createClient(
@@ -55,10 +56,11 @@ export async function GET(
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
     }
 
+    const campaignWithCounts = campaign as AdCampaignWithCounts
     const response: CampaignResponse = {
       ...(campaign as AdCampaign),
-      creatives_count: (campaign as any).ad_creatives?.[0]?.count ?? 0,
-      placements_count: (campaign as any).ad_placements?.[0]?.count ?? 0,
+      creatives_count: campaignWithCounts.ad_creatives?.[0]?.count ?? 0,
+      placements_count: campaignWithCounts.ad_placements?.[0]?.count ?? 0,
     }
 
     return NextResponse.json({ campaign: response })

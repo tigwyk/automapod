@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
+import type { AdCreativeWithCampaign } from '@/lib/types'
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -47,7 +49,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Creative not found' }, { status: 404 })
     }
 
-    if ((creative as any).ad_campaigns.user_id !== user.id) {
+    const creativeWithCampaign = creative as AdCreativeWithCampaign
+    if (creativeWithCampaign.ad_campaigns.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

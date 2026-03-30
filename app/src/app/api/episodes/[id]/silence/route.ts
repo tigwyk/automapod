@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { Queue } from 'bullmq'
 
-import type { SilenceMarkerResponse, SilenceMarker } from '@/lib/types'
+import type { SilenceMarkerResponse, SilenceMarker, EpisodeWithPodcast } from '@/lib/types'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -63,7 +63,8 @@ export async function GET(
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 })
     }
 
-    if ((episode as any).podcasts.user_id !== user.id) {
+    const episodeWithPodcast = episode as EpisodeWithPodcast
+    if (episodeWithPodcast.podcasts.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -137,7 +138,8 @@ export async function POST(
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 })
     }
 
-    if ((episode as any).podcasts.user_id !== user.id) {
+    const episodeWithPodcast = episode as EpisodeWithPodcast
+    if (episodeWithPodcast.podcasts.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -232,7 +234,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 })
     }
 
-    if ((episode as any).podcasts.user_id !== user.id) {
+    const episodeWithPodcast = episode as EpisodeWithPodcast
+    if (episodeWithPodcast.podcasts.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

@@ -7,6 +7,8 @@ import type {
   PlacementResponse,
   AdPlacement,
   AdPlacementUpdate,
+  EpisodeWithPodcast,
+  AdPlacementWithDetails,
 } from '@/lib/types'
 
 const supabase = createClient(
@@ -56,7 +58,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 })
     }
 
-    if ((episode as any).podcasts.user_id !== user.id) {
+    const episodeWithPodcast = episode as EpisodeWithPodcast
+    if (episodeWithPodcast.podcasts.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -105,11 +108,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Placement not found' }, { status: 404 })
     }
 
+    const placementWithDetails = placement as AdPlacementWithDetails
     const response: PlacementResponse = {
       ...(placement as AdPlacement),
       episode_title: episode.title,
-      creative_name: (placement as any).ad_creatives?.name,
-      campaign_name: (placement as any).ad_creatives?.ad_campaigns?.name,
+      creative_name: placementWithDetails.ad_creatives?.name,
+      campaign_name: placementWithDetails.ad_creatives?.ad_campaigns?.name,
     }
 
     return NextResponse.json({ placement: response })
@@ -155,7 +159,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 })
     }
 
-    if ((episode as any).podcasts.user_id !== user.id) {
+    const episodeWithPodcast = episode as EpisodeWithPodcast
+    if (episodeWithPodcast.podcasts.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

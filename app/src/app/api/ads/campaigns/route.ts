@@ -7,6 +7,7 @@ import type {
   CampaignResponse,
   AdCampaign,
   AdCampaignInsert,
+  AdCampaignWithCounts,
 } from '@/lib/types'
 
 const supabase = createClient(
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch campaigns' }, { status: 500 })
     }
 
-    const response: CampaignResponse[] = (campaigns as AdCampaign[]).map((campaign: any) => ({
+    const response: CampaignResponse[] = (campaigns as AdCampaignWithCounts[]).map((campaign) => ({
       ...campaign,
       creatives_count: campaign.ad_creatives?.[0]?.count ?? 0,
       placements_count: campaign.ad_placements?.[0]?.count ?? 0,

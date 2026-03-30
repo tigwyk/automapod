@@ -1,8 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { getTestCredentials } from './test-utils';
 
 // Helper function to create a test podcast and return its ID
-async function createTestPodcast(page: any, titleSuffix: string = '') {
+async function createTestPodcast(page: Page, titleSuffix: string = '') {
   const uniqueSuffix = titleSuffix || `${Date.now()}`;
 
   await page.goto('/podcasts/new');

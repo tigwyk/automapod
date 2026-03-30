@@ -7,6 +7,7 @@ import type {
   CreativeResponse,
   AdCreative,
   AdCreativeInsert,
+  AdCreativeWithCampaignName,
 } from '@/lib/types'
 
 const supabase = createClient(
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch creatives' }, { status: 500 })
     }
 
-    const response: CreativeResponse[] = (creatives as AdCreative[]).map((creative: any) => ({
+    const response: CreativeResponse[] = (creatives as AdCreativeWithCampaignName[]).map((creative) => ({
       ...creative,
       campaign_name: creative.ad_campaigns?.name,
     }))
@@ -144,9 +145,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create creative' }, { status: 500 })
     }
 
+    const creativeWithCampaignName = creative as AdCreativeWithCampaignName
     const response: CreativeResponse = {
       ...(creative as AdCreative),
-      campaign_name: (creative as any).ad_campaigns?.name,
+      campaign_name: creativeWithCampaignName.ad_campaigns?.name,
     }
 
     return NextResponse.json({ creative: response }, { status: 201 })

@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { Queue } from 'bullmq'
 
-import type { InjectAdsRequest, InjectAdsResponse } from '@/lib/types'
+import type { InjectAdsRequest, InjectAdsResponse, EpisodeWithPodcast } from '@/lib/types'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -67,7 +67,8 @@ export async function POST(
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 })
     }
 
-    if ((episode as any).podcasts.user_id !== user.id) {
+    const episodeWithPodcast = episode as EpisodeWithPodcast
+    if (episodeWithPodcast.podcasts.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

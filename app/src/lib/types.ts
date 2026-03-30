@@ -87,6 +87,12 @@ export interface AdCampaign {
 export type AdCampaignInsert = Omit<AdCampaign, 'id' | 'created_at' | 'updated_at'>
 export type AdCampaignUpdate = Partial<Omit<AdCampaignInsert, 'user_id'>>
 
+// Supabase query result with aggregated counts
+export interface AdCampaignWithCounts extends AdCampaign {
+  ad_creatives?: [{ count: number }]
+  ad_placements?: [{ count: number }]
+}
+
 // ============================================
 // Ad Creative Types
 // ============================================
@@ -104,6 +110,27 @@ export interface AdCreative {
 
 export type AdCreativeInsert = Omit<AdCreative, 'id' | 'created_at'>
 export type AdCreativeUpdate = Partial<AdCreativeInsert>
+
+// Supabase query result with nested campaign data
+export interface AdCreativeWithCampaign extends AdCreative {
+  ad_campaigns: {
+    user_id: string
+  }
+}
+
+// Supabase query result with nested campaign name
+export interface AdCreativeWithCampaignName extends AdCreative {
+  ad_campaigns?: {
+    name: string
+  }
+}
+
+// Supabase query result with nested campaign for ownership check
+export interface AdCreativeWithCampaignForOwnership extends AdCreative {
+  ad_campaigns: {
+    user_id: string
+  }
+}
 
 // ============================================
 // Ad Placement Types
@@ -124,6 +151,16 @@ export interface AdPlacement {
 
 export type AdPlacementInsert = Omit<AdPlacement, 'id' | 'created_at'>
 export type AdPlacementUpdate = Partial<AdPlacementInsert>
+
+// Supabase query result with nested creative and campaign data
+export interface AdPlacementWithDetails extends AdPlacement {
+  ad_creatives?: {
+    name: string
+    ad_campaigns?: {
+      name: string
+    }
+  }
+}
 
 // ============================================
 // Silence Marker Types
@@ -163,6 +200,13 @@ export interface Episode {
 
 export type EpisodeInsert = Omit<Episode, 'id' | 'created_at'>
 export type EpisodeUpdate = Partial<Omit<EpisodeInsert, 'podcast_id'>>
+
+// Supabase query result with nested podcast data
+export interface EpisodeWithPodcast extends Episode {
+  podcasts: {
+    user_id: string
+  }
+}
 
 // ============================================
 // Podcast Types
