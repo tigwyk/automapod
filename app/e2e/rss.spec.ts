@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { getTestCredentials } from './test-utils';
 
 interface TestPodcast {
@@ -7,7 +7,7 @@ interface TestPodcast {
 }
 
 // Helper function to create a test podcast with RSS feed verification
-async function createTestPodcast(page: any): Promise<TestPodcast> {
+async function createTestPodcast(page: Page): Promise<TestPodcast> {
   const timestamp = Date.now();
   const testPodcastSlug = `test-podcast-${timestamp}`;
   const testPodcastTitle = `Test Podcast ${timestamp}`;

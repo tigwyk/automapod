@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   // Fetch episode to get the actual audio URL
   const { data: episode, error: episodeError } = await supabase
     .from('episodes')
-    .select('id, audio_url')
+    .select('id, audio_url, ad_enhanced_audio_url')
     .eq('id', episodeId)
     .single();
 
@@ -65,6 +65,9 @@ export async function GET(request: NextRequest) {
     // Episode not found - always return GIF silently (for RSS reader compatibility)
     return returnPixelGif();
   }
+
+  // Prefer ad-enhanced audio when available
+  const audioUrl = episode.ad_enhanced_audio_url || episode.audio_url;
 
   // Get client IP (check multiple headers for different deployments)
   const clientIp =
@@ -106,7 +109,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Redirect to the actual audio file (301 for permanent redirect)
-  return NextResponse.redirect(episode.audio_url, 301);
+  return NextResponse.redirect(audioUrl, 301);
 }
 
 /**
