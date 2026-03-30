@@ -21,7 +21,12 @@ type AnalyticsData = {
   downloadsOverTime: DownloadTimeData[];
 };
 
-async function getAnalytics(episodeId: string): Promise<AnalyticsData | null> {
+type AnalyticsError = {
+  error: string;
+  status: number;
+};
+
+async function getAnalytics(episodeId: string): Promise<AnalyticsData | AnalyticsError | null> {
   try {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/analytics/episode/${episodeId}`,
@@ -31,12 +36,48 @@ async function getAnalytics(episodeId: string): Promise<AnalyticsData | null> {
     );
 
     if (!response.ok) {
-      return null;
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      return { error: error.error || 'Failed to fetch analytics', status: response.status };
     }
 
     return await response.json();
-  } catch {
-    return null;
+  } catch (error) {
+    return { error: 'Network error', status: 0 };
+  }
+}
+
+function getErrorMessage(error: AnalyticsError): { title: string; message: string; action?: string } {
+  switch (error.status) {
+    case 401:
+      return {
+        title: 'Authentication Required',
+        message: 'You need to be logged in to view episode analytics.',
+        action: 'Please log in and try again.',
+      };
+    case 403:
+      return {
+        title: 'Access Denied',
+        message: 'You do not have permission to view analytics for this episode.',
+        action: 'You can only view analytics for episodes in your own podcasts.',
+      };
+    case 404:
+      return {
+        title: 'Episode Not Found',
+        message: 'This episode does not exist or has been deleted.',
+        action: 'Check the episode ID and try again.',
+      };
+    case 500:
+      return {
+        title: 'Server Error',
+        message: 'There was a problem fetching the analytics data.',
+        action: 'Please try again later.',
+      };
+    default:
+      return {
+        title: 'Error',
+        message: error.error || 'An unexpected error occurred.',
+        action: 'Please try again.',
+      };
   }
 }
 
@@ -50,6 +91,30 @@ export default async function EpisodeAnalyticsPage({
 
   if (!analytics) {
     notFound();
+  }
+
+  // Check if this is an error response
+  if ('error' in analytics) {
+    const errorInfo = getErrorMessage(analytics);
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg shadow p-8">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">{errorInfo.title}</h1>
+            <p className="text-gray-700 mb-2">{errorInfo.message}</p>
+            {errorInfo.action && <p className="text-gray-600">{errorInfo.action}</p>}
+            <div className="mt-6">
+              <a
+                href="/dashboard"
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                ← Back to Dashboard
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const maxPlatformCount = Math.max(...Object.values(analytics.platformBreakdown), 1);
