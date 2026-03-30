@@ -59,7 +59,7 @@ export async function PATCH(
     }
 
     const episodeWithPodcast = episode as EpisodeWithPodcast
-    if (episodeWithPodcast.podcasts.user_id !== user.id) {
+    if (episodeWithPodcast.podcasts[0]?.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -113,7 +113,7 @@ export async function PATCH(
       ...(placement as AdPlacement),
       episode_title: episode.title,
       creative_name: placementWithDetails.ad_creatives?.name,
-      campaign_name: placementWithDetails.ad_creatives?.ad_campaigns?.name,
+      campaign_name: placementWithDetails.ad_creatives?.ad_campaigns?.[0]?.name,
     }
 
     return NextResponse.json({ placement: response })
@@ -160,7 +160,7 @@ export async function DELETE(
     }
 
     const episodeWithPodcast = episode as EpisodeWithPodcast
-    if (episodeWithPodcast.podcasts.user_id !== user.id) {
+    if (episodeWithPodcast.podcasts[0]?.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

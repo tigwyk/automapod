@@ -59,7 +59,7 @@ export async function GET(
     }
 
     const episodeWithPodcast = episode as EpisodeWithPodcast
-    if (episodeWithPodcast.podcasts.user_id !== user.id) {
+    if (episodeWithPodcast.podcasts[0]?.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -85,7 +85,7 @@ export async function GET(
       ...placement,
       episode_title: episode.title,
       creative_name: placement.ad_creatives?.name,
-      campaign_name: placement.ad_creatives?.ad_campaigns?.name,
+      campaign_name: placement.ad_creatives?.ad_campaigns?.[0]?.name,
     }))
 
     return NextResponse.json({ placements: response })
@@ -134,7 +134,7 @@ export async function POST(
     }
 
     const episodeWithPodcast = episode as EpisodeWithPodcast
-    if (episodeWithPodcast.podcasts.user_id !== user.id) {
+    if (episodeWithPodcast.podcasts[0]?.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -161,7 +161,7 @@ export async function POST(
     }
 
     const creativeWithCampaign = creative as AdCreativeWithCampaignForOwnership
-    if (creativeWithCampaign.ad_campaigns.user_id !== user.id) {
+    if (creativeWithCampaign.ad_campaigns[0]?.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied to creative' }, { status: 403 })
     }
 
@@ -215,7 +215,7 @@ export async function POST(
       ...(placement as AdPlacement),
       episode_title: episode.title,
       creative_name: placementWithDetails.ad_creatives?.name,
-      campaign_name: placementWithDetails.ad_creatives?.ad_campaigns?.name,
+      campaign_name: placementWithDetails.ad_creatives?.ad_campaigns?.[0]?.name,
     }
 
     return NextResponse.json({ placement: response }, { status: 201 })

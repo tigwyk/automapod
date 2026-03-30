@@ -115,21 +115,21 @@ export type AdCreativeUpdate = Partial<AdCreativeInsert>
 export interface AdCreativeWithCampaign extends AdCreative {
   ad_campaigns: {
     user_id: string
-  }
+  }[]
 }
 
 // Supabase query result with nested campaign name
 export interface AdCreativeWithCampaignName extends AdCreative {
   ad_campaigns?: {
     name: string
-  }
+  }[]
 }
 
 // Supabase query result with nested campaign for ownership check
 export interface AdCreativeWithCampaignForOwnership extends AdCreative {
   ad_campaigns: {
     user_id: string
-  }
+  }[]
 }
 
 // ============================================
@@ -158,8 +158,8 @@ export interface AdPlacementWithDetails extends AdPlacement {
     name: string
     ad_campaigns?: {
       name: string
-    }
-  }
+    }[]
+  }[]
 }
 
 // ============================================
@@ -205,7 +205,7 @@ export type EpisodeUpdate = Partial<Omit<EpisodeInsert, 'podcast_id'>>
 export interface EpisodeWithPodcast extends Episode {
   podcasts: {
     user_id: string
-  }
+  }[]
 }
 
 // ============================================

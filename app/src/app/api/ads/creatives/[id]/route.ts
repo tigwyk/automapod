@@ -50,7 +50,7 @@ export async function DELETE(
     }
 
     const creativeWithCampaign = creative as AdCreativeWithCampaign
-    if (creativeWithCampaign.ad_campaigns.user_id !== user.id) {
+    if (creativeWithCampaign.ad_campaigns[0]?.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

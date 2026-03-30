@@ -68,7 +68,7 @@ export async function POST(
     }
 
     const episodeWithPodcast = episode as EpisodeWithPodcast
-    if (episodeWithPodcast.podcasts.user_id !== user.id) {
+    if (episodeWithPodcast.podcasts[0]?.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
