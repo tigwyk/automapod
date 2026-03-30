@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: 'Podcast not found' }, { status: 404 });
     }
 
-    // Fetch published episodes for this podcast
+    // Fetch published episodes for this podcast (including ad-enhanced audio)
     const { data: episodes, error: episodesError } = await supabase
       .from('episodes')
       .select('*')
@@ -77,6 +77,7 @@ interface EpisodeRecord {
   title: string;
   description: string | null;
   audio_url: string | null;
+  ad_enhanced_audio_url: string | null;
   created_at: string;
   duration_seconds: number | null;
 }
@@ -105,9 +106,12 @@ function generateRSSFeed(podcast: PodcastRecord, episodes: EpisodeRecord[], requ
     const pubDate = episode.created_at ? formatDate(episode.created_at) : '';
     const duration = episode.duration_seconds ? formatDuration(episode.duration_seconds) : '0:00:00';
 
+    // Use ad-enhanced audio if available, otherwise fall back to original audio
+    const audioUrl = episode.ad_enhanced_audio_url || episode.audio_url;
+
     // Use tracking URL for enclosure - points to our tracking endpoint which redirects to R2
     // The endpoint tracks the download, then redirects to the actual audio file
-    const trackedAudioUrl = episode.audio_url ?
+    const trackedAudioUrl = audioUrl ?
       `${baseUrl}/api/track/download?episodeId=${episode.id}` : null;
 
     const enclosure = trackedAudioUrl ?
