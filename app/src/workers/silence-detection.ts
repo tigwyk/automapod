@@ -1,12 +1,12 @@
 import { Worker, Job } from 'bullmq'
 import { createClient } from '@supabase/supabase-js'
-import { exec } from 'child_process'
+import { execFile } from 'child_process'
 import { promisify } from 'util'
 import fs from 'fs/promises'
 import path from 'path'
 import os from 'os'
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,15 +49,15 @@ export async function runSilenceDetectionWorker() {
 
       job.updateProgress(10)
 
+      let tempDir: string | undefined
       try {
         // Download audio to temp file
-        const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'silence-'))
+        tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'silence-'))
         const audioPath = path.join(tempDir, 'audio.mp3')
 
         job.updateProgress(20)
 
         // Download from R2 (or whatever storage)
-        // For now, assume we can fetch the URL
         const response = await fetch(audioUrl)
         if (!response.ok) {
           throw new Error(`Failed to download audio: ${response.statusText}`)
@@ -71,17 +71,15 @@ export async function runSilenceDetectionWorker() {
         // Run ffmpeg silence detection
         // ffmpeg -i audio.mp3 -af silencedetect=noise=-30dB:d=1 -f null -
         const minDurationSec = minDurationMs / 1000
-        const ffmpegCmd = [
-          'ffmpeg',
-          '-i', audioPath,
-          '-af', `silencedetect=noise=-30dB:d=${minDurationSec}`,
-          '-f', 'null',
-          '-'
-        ].join(' ')
 
         job.updateProgress(50)
 
-        const { stdout, stderr } = await execAsync(ffmpegCmd)
+        const { stderr } = await execFileAsync('ffmpeg', [
+          '-i', audioPath,
+          '-af', `silencedetect=noise=-30dB:d=${minDurationSec}`,
+          '-f', 'null',
+          '-',
+        ])
         const output = stderr // ffmpeg writes to stderr
 
         job.updateProgress(70)
@@ -123,18 +121,20 @@ export async function runSilenceDetectionWorker() {
 
         job.updateProgress(100)
 
-        // Cleanup temp file
-        await fs.rm(tempDir, { recursive: true, force: true })
-
         return {
           success: true,
           episodeId,
           markersDetected: filteredSegments.length,
           suggestedPlacements: filteredSegments.filter(m => m.is_suggested_placement).length,
         }
-      } catch (error) {
-        console.error('Error in silence detection job:', error)
-        throw error
+      } finally {
+        if (tempDir) {
+          try {
+            await fs.rm(tempDir, { recursive: true, force: true })
+          } catch (cleanupError) {
+            console.error('Failed to cleanup temp directory:', cleanupError)
+          }
+        }
       }
     },
     {

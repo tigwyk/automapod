@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 
 import type {
   UpdateCampaignRequest,
@@ -9,11 +8,6 @@ import type {
   AdCampaignUpdate,
   AdCampaignWithCounts,
 } from '@/lib/types'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -29,24 +23,18 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { data: campaign, error } = await supabase
       .from('ad_campaigns')
       .select(`
         *,
-        ad_creatives(count),
-        ad_placements(count)
+        ad_creatives(count)
       `)
       .eq('id', id)
       .eq('user_id', user.id)
@@ -56,11 +44,10 @@ export async function GET(
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
     }
 
-    const campaignWithCounts = campaign as AdCampaignWithCounts
     const response: CampaignResponse = {
       ...(campaign as AdCampaign),
-      creatives_count: campaignWithCounts.ad_creatives[0]?.count ?? 0,
-      placements_count: campaignWithCounts.ad_placements?.[0]?.count ?? 0,
+      creatives_count: (campaign as AdCampaignWithCounts).ad_creatives?.[0]?.count ?? 0,
+      placements_count: 0,
     }
 
     return NextResponse.json({ campaign: response })
@@ -80,16 +67,11 @@ export async function PATCH(
 ) {
   try {
     const { id } = await context.params
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Verify ownership
@@ -169,16 +151,11 @@ export async function DELETE(
 ) {
   try {
     const { id } = await context.params
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Verify ownership

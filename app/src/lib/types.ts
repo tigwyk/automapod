@@ -68,8 +68,8 @@ export interface Database {
 // Ad Campaign Types
 // ============================================
 
-export type AdCampaignType = Database.public.Enums['ad_campaign_type']
-export type AdCampaignStatus = Database.public.Enums['ad_campaign_status']
+export type AdCampaignType = Database['public']['Enums']['ad_campaign_type']
+export type AdCampaignStatus = Database['public']['Enums']['ad_campaign_status']
 
 export interface AdCampaign {
   id: string
@@ -115,29 +115,29 @@ export type AdCreativeUpdate = Partial<AdCreativeInsert>
 export interface AdCreativeWithCampaign extends AdCreative {
   ad_campaigns: {
     user_id: string
-  }[]
+  }
 }
 
 // Supabase query result with nested campaign name
 export interface AdCreativeWithCampaignName extends AdCreative {
   ad_campaigns?: {
     name: string
-  }[]
+  }
 }
 
 // Supabase query result with nested campaign for ownership check
 export interface AdCreativeWithCampaignForOwnership extends AdCreative {
   ad_campaigns: {
     user_id: string
-  }[]
+  }
 }
 
 // ============================================
 // Ad Placement Types
 // ============================================
 
-export type AdPlacementType = Database.public.Enums['ad_placement_type']
-export type AdPlacementStatus = Database.public.Enums['ad_placement_status']
+export type AdPlacementType = Database['public']['Enums']['ad_placement_type']
+export type AdPlacementStatus = Database['public']['Enums']['ad_placement_status']
 
 export interface AdPlacement {
   id: string
@@ -158,8 +158,8 @@ export interface AdPlacementWithDetails extends AdPlacement {
     name: string
     ad_campaigns?: {
       name: string
-    }[]
-  }[]
+    }
+  }
 }
 
 // ============================================
@@ -205,7 +205,7 @@ export type EpisodeUpdate = Partial<Omit<EpisodeInsert, 'podcast_id'>>
 export interface EpisodeWithPodcast extends Episode {
   podcasts: {
     user_id: string
-  }[]
+  }
 }
 
 // ============================================

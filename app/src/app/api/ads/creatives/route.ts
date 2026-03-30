@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 
 import type {
   CreateCreativeRequest,
@@ -10,27 +9,17 @@ import type {
   AdCreativeWithCampaignName,
 } from '@/lib/types'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 /**
  * GET /api/ads/creatives
  * List all creatives for the authenticated user's campaigns
  */
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const searchParams = request.nextUrl.searchParams
@@ -59,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     const response: CreativeResponse[] = (creatives as AdCreativeWithCampaignName[]).map((creative) => ({
       ...creative,
-      campaign_name: creative.ad_campaigns[0]?.name,
+      campaign_name: creative.ad_campaigns?.name,
     }))
 
     return NextResponse.json({ creatives: response })
@@ -75,16 +64,11 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json() as CreateCreativeRequest
@@ -145,10 +129,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create creative' }, { status: 500 })
     }
 
-    const creativeWithCampaignName = creative as AdCreativeWithCampaignName
     const response: CreativeResponse = {
       ...(creative as AdCreative),
-      campaign_name: creativeWithCampaignName.ad_campaigns[0]?.name,
+      campaign_name: (creative as AdCreativeWithCampaignName).ad_campaigns?.name,
     }
 
     return NextResponse.json({ creative: response }, { status: 201 })

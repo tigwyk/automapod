@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 
 import type { AdCreativeWithCampaign } from '@/lib/types'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -23,16 +17,11 @@ export async function DELETE(
 ) {
   try {
     const { id } = await context.params
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Verify ownership through campaign
@@ -49,8 +38,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Creative not found' }, { status: 404 })
     }
 
-    const creativeWithCampaign = creative as AdCreativeWithCampaign
-    if (creativeWithCampaign.ad_campaigns[0]?.user_id !== user.id) {
+    if ((creative as unknown as AdCreativeWithCampaign).ad_campaigns.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

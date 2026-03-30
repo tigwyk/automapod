@@ -1,20 +1,20 @@
 import { Worker, Job } from 'bullmq'
 import { createClient } from '@supabase/supabase-js'
-import { exec } from 'child_process'
+import { execFile } from 'child_process'
 import { promisify } from 'util'
 import fs from 'fs/promises'
 import path from 'path'
 import os from 'os'
-import { R2 } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const r2 = new R2({
+const r2Client = new S3Client({
   region: 'auto',
   endpoint: process.env.R2_ENDPOINT || `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
@@ -109,97 +109,102 @@ export async function runAdInjectionWorker() {
         job.updateProgress(30)
 
         // Create temp directory
-        const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ad-inject-'))
-        const episodePath = path.join(tempDir, 'episode.mp3')
-        const adDir = path.join(tempDir, 'ads')
-        await fs.mkdir(adDir)
-        const concatFilePath = path.join(tempDir, 'concat.txt')
-        const outputPath = path.join(tempDir, 'output.mp3')
+        let tempDir: string | undefined
+        try {
+          tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ad-inject-'))
+          const episodePath = path.join(tempDir, 'episode.mp3')
+          const adDir = path.join(tempDir, 'ads')
+          await fs.mkdir(adDir)
+          const concatFilePath = path.join(tempDir, 'concat.txt')
+          const outputPath = path.join(tempDir, 'output.mp3')
 
-        // Download episode audio
-        const episodeResponse = await fetch(episode.audio_url)
-        if (!episodeResponse.ok) {
-          throw new Error(`Failed to download episode audio: ${episodeResponse.statusText}`)
-        }
-        const episodeBuffer = await episodeResponse.arrayBuffer()
-        await fs.writeFile(episodePath, Buffer.from(episodeBuffer))
-
-        job.updateProgress(40)
-
-        // Download all ad creatives
-        const adPaths: Map<string, string> = new Map()
-        for (const placement of placements as PlacementWithCreative[]) {
-          const adPath = path.join(adDir, `ad-${placement.ad_creatives.id}.mp3`)
-          const adResponse = await fetch(placement.ad_creatives.audio_url)
-          if (!adResponse.ok) {
-            throw new Error(`Failed to download ad: ${adResponse.statusText}`)
+          // Download episode audio
+          const episodeResponse = await fetch(episode.audio_url)
+          if (!episodeResponse.ok) {
+            throw new Error(`Failed to download episode audio: ${episodeResponse.statusText}`)
           }
-          const adBuffer = await adResponse.arrayBuffer()
-          await fs.writeFile(adPath, Buffer.from(adBuffer))
-          adPaths.set(placement.ad_creatives.id, adPath)
-        }
+          const episodeBuffer = await episodeResponse.arrayBuffer()
+          await fs.writeFile(episodePath, Buffer.from(episodeBuffer))
 
-        job.updateProgress(50)
+          job.updateProgress(40)
 
-        // Generate ffmpeg concat script
-        // We need to split the episode at each ad position and insert ads
-        await generateConcatScript(
-          episodePath,
-          outputPath,
-          concatFilePath,
-          placements as PlacementWithCreative[],
-          adPaths
-        )
+          // Download all ad creatives
+          const adPaths: Map<string, string> = new Map()
+          for (const placement of placements as unknown as PlacementWithCreative[]) {
+            const adPath = path.join(adDir, `ad-${placement.ad_creatives.id}.mp3`)
+            const adResponse = await fetch(placement.ad_creatives.audio_url)
+            if (!adResponse.ok) {
+              throw new Error(`Failed to download ad: ${adResponse.statusText}`)
+            }
+            const adBuffer = await adResponse.arrayBuffer()
+            await fs.writeFile(adPath, Buffer.from(adBuffer))
+            adPaths.set(placement.ad_creatives.id, adPath)
+          }
 
-        job.updateProgress(70)
+          job.updateProgress(50)
 
-        // Run ffmpeg concatenation
-        const ffmpegCmd = [
-          'ffmpeg',
-          '-f', 'concat',
-          '-safe', '0',
-          '-i', concatFilePath,
-          '-c', 'copy',
-          outputPath,
-        ].join(' ')
+          // Generate ffmpeg concat script
+          // We need to split the episode at each ad position and insert ads
+          await generateConcatScript(
+            episodePath,
+            tempDir,
+            concatFilePath,
+            placements as unknown as PlacementWithCreative[],
+            adPaths
+          )
 
-        await execAsync(ffmpegCmd)
+          job.updateProgress(70)
 
-        job.updateProgress(80)
+          // Run ffmpeg concatenation
+          await execFileAsync('ffmpeg', [
+            '-f', 'concat',
+            '-safe', '0',
+            '-i', concatFilePath,
+            '-c', 'copy',
+            outputPath,
+          ])
 
-        // Upload to R2
-        const outputBuffer = await fs.readFile(outputPath)
-        const enhancedKey = `episodes/${episodeId}/enhanced-${Date.now()}.mp3`
-        const r2Key = `podcasts/${enhancedKey}`
+          job.updateProgress(80)
 
-        await r2.putObject({
-          Bucket: R2_BUCKET,
-          Key: r2Key,
-          Body: outputBuffer,
-          ContentType: 'audio/mpeg',
-        })
+          // Upload to R2
+          const outputBuffer = await fs.readFile(outputPath)
+          const enhancedKey = `episodes/${episodeId}/enhanced-${Date.now()}.mp3`
+          const r2Key = `podcasts/${enhancedKey}`
 
-        const enhancedUrl = `${R2_PUBLIC_URL}/${r2Key}`
+          await r2Client.send(new PutObjectCommand({
+            Bucket: R2_BUCKET,
+            Key: r2Key,
+            Body: outputBuffer,
+            ContentType: 'audio/mpeg',
+          }))
 
-        job.updateProgress(90)
+          const enhancedUrl = `${R2_PUBLIC_URL}/${r2Key}`
 
-        // Update episode with enhanced audio URL
-        await supabase
-          .from('episodes')
-          .update({ ad_enhanced_audio_url: enhancedUrl })
-          .eq('id', episodeId)
+          job.updateProgress(90)
 
-        // Cleanup
-        await fs.rm(tempDir, { recursive: true, force: true })
+          // Update episode with enhanced audio URL
+          await supabase
+            .from('episodes')
+            .update({ ad_enhanced_audio_url: enhancedUrl })
+            .eq('id', episodeId)
 
-        job.updateProgress(100)
+          job.updateProgress(100)
 
-        return {
-          success: true,
-          episodeId,
-          audioUrl: enhancedUrl,
-          adsInjected: placements.length,
-          processingTimeMs: Date.now() - job.timestamp,
+          return {
+            success: true,
+            episodeId,
+            audioUrl: enhancedUrl,
+            adsInjected: placements.length,
+            processingTimeMs: Date.now() - job.timestamp,
+          }
+        } finally {
+          if (tempDir) {
+            try {
+              await fs.rm(tempDir, { recursive: true, force: true })
+            } catch (cleanupError) {
+              console.error('Failed to cleanup temp directory:', cleanupError)
+            }
+          }
         }
       } catch (error) {
         console.error('Error in ad injection job:', error)
@@ -232,30 +237,31 @@ export async function runAdInjectionWorker() {
 /**
  * Generate ffmpeg concat script
  *
- * Splits episode at ad positions and creates concat file
+ * Splits episode at ad positions into real temp segments and creates concat file.
  * Format: file '/path/to/file.mp3'
  */
 async function generateConcatScript(
   episodePath: string,
-  outputPath: string,
+  tempDir: string,
   concatFilePath: string,
   placements: PlacementWithCreative[],
   adPaths: Map<string, string>
 ): Promise<void> {
   // Get episode duration using ffprobe
-  const { stdout } = await execAsync(
-    `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${episodePath}"`
-  )
-  const episodeDuration = parseFloat(stdout.trim()) * 1000 // Convert to ms
+  const { stdout } = await execFileAsync('ffprobe', [
+    '-v', 'error',
+    '-show_entries', 'format=duration',
+    '-of', 'default=noprint_wrappers=1:nokey=1',
+    episodePath,
+  ])
+  const episodeDurationSec = parseFloat(stdout.trim())
 
-  // Create concat script
-  // Format: duration file_path (for segments) or just file_path
   const concatLines: string[] = []
-
-  let currentPosition = 0
+  let currentPositionSec = 0
+  let segmentIndex = 0
 
   for (const placement of placements) {
-    const positionMs = placement.position_ms
+    const positionSec = placement.position_ms / 1000
     const adPath = adPaths.get(placement.ad_creatives.id)
 
     if (!adPath) {
@@ -263,25 +269,49 @@ async function generateConcatScript(
       continue
     }
 
-    // Add episode segment before this ad
-    if (positionMs > currentPosition) {
-      const segmentDuration = (positionMs - currentPosition) / 1000
-      concatLines.push(`${segmentDuration.toFixed(3)} ${episodePath}`)
+    // Add episode segment before this ad, if there is a gap
+    if (positionSec > currentPositionSec) {
+      const segmentPath = path.join(tempDir, `episode_segment_${segmentIndex++}.mp3`)
+      const start = currentPositionSec.toFixed(3)
+      const duration = (positionSec - currentPositionSec).toFixed(3)
+
+      await execFileAsync('ffmpeg', [
+        '-y',
+        '-ss', start,
+        '-t', duration,
+        '-i', episodePath,
+        '-c', 'copy',
+        segmentPath,
+      ])
+
+      concatLines.push(`file '${segmentPath}'`)
     }
 
-    // Add ad
-    concatLines.push(`${placement.ad_creatives.duration_seconds.toFixed(3)} ${adPath}`)
+    // Add ad file
+    concatLines.push(`file '${adPath}'`)
 
-    currentPosition = positionMs
+    currentPositionSec = positionSec
   }
 
-  // Add remaining episode segment
-  if (currentPosition < episodeDuration) {
-    const segmentDuration = (episodeDuration - currentPosition) / 1000
-    concatLines.push(`${segmentDuration.toFixed(3)} ${episodePath}`)
+  // Add remaining episode segment after the last ad
+  if (currentPositionSec < episodeDurationSec) {
+    const finalSegmentPath = path.join(tempDir, `episode_segment_${segmentIndex++}.mp3`)
+    const start = currentPositionSec.toFixed(3)
+    const duration = (episodeDurationSec - currentPositionSec).toFixed(3)
+
+    await execFileAsync('ffmpeg', [
+      '-y',
+      '-ss', start,
+      '-t', duration,
+      '-i', episodePath,
+      '-c', 'copy',
+      finalSegmentPath,
+    ])
+
+    concatLines.push(`file '${finalSegmentPath}'`)
   }
 
-  // Write concat file
+  // Write concat file in ffmpeg concat demuxer format
   await fs.writeFile(concatFilePath, concatLines.join('\n'))
 }
 

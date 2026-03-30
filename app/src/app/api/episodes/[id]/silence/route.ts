@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { Queue } from 'bullmq'
 
 import type { SilenceMarkerResponse, SilenceMarker, EpisodeWithPodcast } from '@/lib/types'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // Initialize BullMQ queue for silence detection
 const getSilenceQueue = () => {
@@ -37,16 +31,11 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Verify episode ownership
@@ -63,8 +52,7 @@ export async function GET(
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 })
     }
 
-    const episodeWithPodcast = episode as EpisodeWithPodcast
-    if (episodeWithPodcast.podcasts[0]?.user_id !== user.id) {
+    if ((episode as unknown as EpisodeWithPodcast).podcasts.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -109,16 +97,11 @@ export async function POST(
 ) {
   try {
     const { id } = await context.params
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Verify episode ownership
@@ -138,8 +121,7 @@ export async function POST(
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 })
     }
 
-    const episodeWithPodcast = episode as EpisodeWithPodcast
-    if (episodeWithPodcast.podcasts[0]?.user_id !== user.id) {
+    if ((episode as unknown as EpisodeWithPodcast).podcasts.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -160,10 +142,17 @@ export async function POST(
     }
 
     // Clear existing markers
-    await supabase
+    const { error: deleteError } = await supabase
       .from('silence_markers')
       .delete()
       .eq('episode_id', id)
+
+    if (deleteError) {
+      return NextResponse.json(
+        { error: 'Failed to clear existing silence markers' },
+        { status: 500 }
+      )
+    }
 
     // Queue silence detection job
     const queue = getSilenceQueue()
@@ -208,16 +197,11 @@ export async function DELETE(
 ) {
   try {
     const { id } = await context.params
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Verify episode ownership
@@ -234,8 +218,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 })
     }
 
-    const episodeWithPodcast = episode as EpisodeWithPodcast
-    if (episodeWithPodcast.podcasts[0]?.user_id !== user.id) {
+    if ((episode as unknown as EpisodeWithPodcast).podcasts.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

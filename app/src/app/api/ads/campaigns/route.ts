@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 
 import type {
   CreateCampaignRequest,
@@ -10,35 +9,24 @@ import type {
   AdCampaignWithCounts,
 } from '@/lib/types'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 /**
  * GET /api/ads/campaigns
  * List all campaigns for the authenticated user
  */
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { data: campaigns, error } = await supabase
       .from('ad_campaigns')
       .select(`
         *,
-        ad_creatives(count),
-        ad_placements(count)
+        ad_creatives(count)
       `)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
@@ -50,8 +38,8 @@ export async function GET(request: NextRequest) {
 
     const response: CampaignResponse[] = (campaigns as AdCampaignWithCounts[]).map((campaign) => ({
       ...campaign,
-      creatives_count: campaign.ad_creatives[0]?.count ?? 0,
-      placements_count: campaign.ad_placements?.[0]?.count ?? 0,
+      creatives_count: campaign.ad_creatives?.[0]?.count ?? 0,
+      placements_count: 0,
     }))
 
     return NextResponse.json({ campaigns: response })
@@ -67,16 +55,11 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json() as CreateCampaignRequest

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 
 import type {
   UpdatePlacementRequest,
@@ -10,11 +9,6 @@ import type {
   EpisodeWithPodcast,
   AdPlacementWithDetails,
 } from '@/lib/types'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 type RouteContext = {
   params: Promise<{ id: string; placementId: string }>
@@ -30,16 +24,11 @@ export async function PATCH(
 ) {
   try {
     const { id, placementId } = await context.params
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Verify episode ownership
@@ -58,8 +47,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 })
     }
 
-    const episodeWithPodcast = episode as EpisodeWithPodcast
-    if (episodeWithPodcast.podcasts[0]?.user_id !== user.id) {
+    if ((episode as unknown as EpisodeWithPodcast).podcasts.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -108,12 +96,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Placement not found' }, { status: 404 })
     }
 
-    const placementWithDetails = placement as AdPlacementWithDetails
     const response: PlacementResponse = {
       ...(placement as AdPlacement),
       episode_title: episode.title,
-      creative_name: placementWithDetails.ad_creatives?.name,
-      campaign_name: placementWithDetails.ad_creatives?.ad_campaigns[0]?.name,
+      creative_name: (placement as AdPlacementWithDetails).ad_creatives?.name,
+      campaign_name: (placement as AdPlacementWithDetails).ad_creatives?.ad_campaigns?.name,
     }
 
     return NextResponse.json({ placement: response })
@@ -133,16 +120,11 @@ export async function DELETE(
 ) {
   try {
     const { id, placementId } = await context.params
-    const cookieStore = await cookies()
-    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = await createClient()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid authentication' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Verify episode ownership
@@ -159,8 +141,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Episode not found' }, { status: 404 })
     }
 
-    const episodeWithPodcast = episode as EpisodeWithPodcast
-    if (episodeWithPodcast.podcasts[0]?.user_id !== user.id) {
+    if ((episode as unknown as EpisodeWithPodcast).podcasts.user_id !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
