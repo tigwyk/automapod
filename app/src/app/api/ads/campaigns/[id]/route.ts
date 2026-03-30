@@ -29,7 +29,7 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
 
     if (!token) {
@@ -80,7 +80,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await context.params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
 
     if (!token) {
@@ -169,7 +169,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await context.params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
 
     if (!token) {

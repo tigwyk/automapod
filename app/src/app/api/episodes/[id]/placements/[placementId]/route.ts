@@ -30,7 +30,7 @@ export async function PATCH(
 ) {
   try {
     const { id, placementId } = await context.params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
 
     if (!token) {
@@ -133,7 +133,7 @@ export async function DELETE(
 ) {
   try {
     const { id, placementId } = await context.params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
 
     if (!token) {
