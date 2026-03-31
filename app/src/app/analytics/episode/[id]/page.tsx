@@ -14,6 +14,7 @@ type DownloadTimeData = {
 
 type AnalyticsData = {
   episodeId: string;
+  podcastId: string | null;
   title: string;
   totalDownloads: number;
   uniqueDownloads: number;
@@ -120,6 +121,11 @@ export default async function EpisodeAnalyticsPage({
   const maxPlatformCount = Math.max(...Object.values(analytics.platformBreakdown), 1);
   const maxDailyCount = Math.max(...analytics.downloadsOverTime.map(d => d.count), 1);
 
+  // Determine the back link based on whether the episode is part of a podcast
+  const backToEpisodeUrl = analytics.podcastId
+    ? `/podcasts/${analytics.podcastId}/episodes/${analytics.episodeId}`
+    : `/episodes/${analytics.episodeId}`;
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -209,7 +215,7 @@ export default async function EpisodeAnalyticsPage({
         {/* Back Link */}
         <div className="mt-8">
           <a
-            href={`/episodes/${id}`}
+            href={backToEpisodeUrl}
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
             ← Back to Episode
