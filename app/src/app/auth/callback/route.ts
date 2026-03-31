@@ -25,6 +25,13 @@ export async function GET(request: NextRequest) {
       // Successful email verification, redirect to dashboard
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
+
+    // Log the error for debugging
+    console.error('Auth callback error:', {
+      message: error.message,
+      status: error.status,
+      name: error.name,
+    });
   }
 
   // If there's an error or no code, redirect to login with error message
