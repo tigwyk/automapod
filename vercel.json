@@ -44,5 +44,10 @@
     }
   ],
 
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/cron/monitoring",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }
