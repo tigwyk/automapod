@@ -6,7 +6,7 @@ import type { SubscriptionStatus, SubscriptionTier } from '@/lib/subscription';
 
 // Service role client — bypasses RLS for webhook writes (no user session in webhook context)
 function getServiceRoleClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)?.trim();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!url || !key) throw new Error('Missing Supabase env vars');
   return createClient(url, key);
