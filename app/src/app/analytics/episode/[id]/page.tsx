@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 type PlatformData = {
   ios: number;
@@ -14,6 +15,7 @@ type DownloadTimeData = {
 
 type AnalyticsData = {
   episodeId: string;
+  podcastId: string | null;
   title: string;
   totalDownloads: number;
   uniqueDownloads: number;
@@ -28,10 +30,19 @@ type AnalyticsError = {
 
 async function getAnalytics(episodeId: string): Promise<AnalyticsData | AnalyticsError | null> {
   try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join('; ');
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/analytics/episode/${episodeId}`,
       {
         cache: 'no-store',
+        headers: {
+          Cookie: cookieHeader,
+        },
       }
     );
 
@@ -119,6 +130,11 @@ export default async function EpisodeAnalyticsPage({
 
   const maxPlatformCount = Math.max(...Object.values(analytics.platformBreakdown), 1);
   const maxDailyCount = Math.max(...analytics.downloadsOverTime.map(d => d.count), 1);
+
+  // Determine the back link based on whether the episode is part of a podcast
+  const backToEpisodeUrl = analytics.podcastId
+    ? `/podcasts/${analytics.podcastId}/episodes/${analytics.episodeId}`
+    : `/episodes/${analytics.episodeId}`;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -209,7 +225,7 @@ export default async function EpisodeAnalyticsPage({
         {/* Back Link */}
         <div className="mt-8">
           <a
-            href={`/episodes/${id}`}
+            href={backToEpisodeUrl}
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
             ← Back to Episode

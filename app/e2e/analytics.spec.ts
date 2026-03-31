@@ -167,4 +167,132 @@ test.describe('Analytics & Download Tracking', () => {
     expect(json.platformBreakdown).toHaveProperty('web');
     expect(json.platformBreakdown).toHaveProperty('other');
   });
+
+  test('should show correct back link for standalone episode', async ({ page }) => {
+    // Create a standalone episode
+    await page.goto('/episodes/new');
+
+    const timestamp = Date.now();
+    const testTitle = `Back Link Test ${timestamp}`;
+
+    await page.fill('input[name="title"]', testTitle);
+
+    const testAudioBuffer = Buffer.from(
+      'ID3' + '\x00\x00\x00' + '\x00\x00\x00\x00' +
+      '\xff\xe3' + '\x00\x00' + '\x00\x00' + '\x00\x00' +
+      '\x00'.repeat(100)
+    );
+
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles({
+      name: 'test.mp3',
+      mimeType: 'audio/mpeg',
+      buffer: testAudioBuffer,
+    });
+
+    await page.click('button[type="submit"]');
+    await page.waitForTimeout(5000);
+
+    // Get the episode ID from URL
+    const currentUrl = page.url();
+    const episodeIdMatch = currentUrl.match(/\/episodes\/([a-f0-9-]+)/);
+
+    if (!episodeIdMatch) {
+      test.skip(true, 'Could not extract episode ID');
+      return;
+    }
+
+    const episodeId = episodeIdMatch[1];
+
+    // Navigate to analytics page
+    await page.goto(`/analytics/episode/${episodeId}`);
+    await page.waitForLoadState('networkidle');
+
+    // Check the back link goes to the standalone episode page
+    const backLink = page.locator('a:has-text("Back to Episode")');
+    await expect(backLink).toBeVisible();
+
+    const href = await backLink.getAttribute('href');
+    expect(href).toBe(`/episodes/${episodeId}`);
+  });
+
+  test('should show correct back link for podcast episode', async ({ page }) => {
+    // Create a podcast first
+    const timestamp = Date.now();
+    const testPodcastTitle = `Back Link Podcast ${timestamp}`;
+    const testSlug = `back-link-pod-${timestamp}`;
+
+    await page.goto('/podcasts/new');
+    await page.fill('input#title', testPodcastTitle);
+    await page.fill('input#rss_slug', testSlug);
+    await page.click('button[type="submit"]');
+    await page.waitForURL('/podcasts', { timeout: 10000 });
+
+    // Navigate to the podcast detail page
+    const podcastLink = page.locator(`a:has-text("${testPodcastTitle}")`).first();
+    await podcastLink.click();
+    await page.waitForLoadState('networkidle');
+
+    // Extract podcast ID from URL
+    const currentUrl = page.url();
+    const podcastIdMatch = currentUrl.match(/\/podcasts\/([a-f0-9-]+)/);
+
+    if (!podcastIdMatch) {
+      test.skip(true, 'Could not extract podcast ID');
+      return;
+    }
+
+    const podcastId = podcastIdMatch[1];
+
+    // Navigate to episodes
+    await page.goto(`/podcasts/${podcastId}/episodes`);
+    await page.waitForLoadState('networkidle');
+
+    // Click "New Episode" button
+    const newEpisodeButton = page.locator('a:has-text("New Episode")');
+    await newEpisodeButton.click();
+    await page.waitForLoadState('networkidle');
+
+    // Create an episode
+    const testEpisodeTitle = `Back Link Episode ${timestamp}`;
+    await page.fill('input[name="title"]', testEpisodeTitle);
+
+    const testAudioBuffer = Buffer.from(
+      'ID3' + '\x00\x00\x00' + '\x00\x00\x00\x00' +
+      '\xff\xe3' + '\x00\x00' + '\x00\x00' + '\x00\x00' +
+      '\x00'.repeat(100)
+    );
+
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles({
+      name: 'test.mp3',
+      mimeType: 'audio/mpeg',
+      buffer: testAudioBuffer,
+    });
+
+    await page.click('button[type="submit"]');
+    await page.waitForTimeout(5000);
+
+    // Get the episode ID from URL
+    const episodeUrl = page.url();
+    const episodeIdMatch = episodeUrl.match(/\/episodes\/([a-f0-9-]+)/);
+
+    if (!episodeIdMatch) {
+      test.skip(true, 'Could not extract episode ID');
+      return;
+    }
+
+    const episodeId = episodeIdMatch[1];
+
+    // Navigate to analytics page
+    await page.goto(`/analytics/episode/${episodeId}`);
+    await page.waitForLoadState('networkidle');
+
+    // Check the back link goes to the podcast episode page
+    const backLink = page.locator('a:has-text("Back to Episode")');
+    await expect(backLink).toBeVisible();
+
+    const href = await backLink.getAttribute('href');
+    expect(href).toBe(`/podcasts/${podcastId}/episodes/${episodeId}`);
+  });
 });

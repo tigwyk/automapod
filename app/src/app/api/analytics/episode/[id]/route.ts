@@ -126,6 +126,7 @@ export async function GET(
 
     return NextResponse.json({
       episodeId: episode.id,
+      podcastId: episode.podcast_id,
       title: episode.title,
       totalDownloads,
       uniqueDownloads,
