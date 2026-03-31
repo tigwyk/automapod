@@ -70,15 +70,19 @@ export async function recordMetric(
     const supabase = await createClient();
 
     // Fire-and-forget: don't await
-    supabase.from('infrastructure_metrics').insert({
-      metric_type: type,
-      value,
-      unit,
-      metadata: metadata ?? {},
-    }).catch((err) => {
-      // Silent fail - metrics shouldn't break the app
-      console.error(`Failed to record metric ${type}:`, err);
-    });
+    void (async () => {
+      try {
+        await supabase.from('infrastructure_metrics').insert({
+          metric_type: type,
+          value,
+          unit,
+          metadata: metadata ?? {},
+        });
+      } catch (err) {
+        // Silent fail - metrics shouldn't break the app
+        console.error(`Failed to record metric ${type}:`, err);
+      }
+    })();
   } catch (error) {
     // Silent fail - metrics shouldn't break the app
     console.error(`Failed to record metric ${type}:`, error);
@@ -348,3 +352,6 @@ export async function checkAllThresholds(): Promise<
 
   return violations;
 }
+
+// Re-export alerts functions for convenience
+export { getActiveAlerts } from './alerts';

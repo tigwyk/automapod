@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         dryRun: true,
-        violations: violations.length,
+        violationsCount: violations.length,
         violations: violations.map((v) => ({
           metricType: v.metricType,
           severity: v.severity,

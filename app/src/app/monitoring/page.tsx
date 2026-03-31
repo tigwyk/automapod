@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { getAllMetricSummaries, getActiveAlerts, type MetricType } from '@/lib/monitoring';
 import type { InfrastructureAlert } from '@/lib/alerts';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Monitoring Dashboard
@@ -13,7 +14,7 @@ import type { InfrastructureAlert } from '@/lib/alerts';
  */
 
 // Check if user is admin (simple check - can be enhanced with proper role system)
-async function isAdmin(supabase: any): Promise<boolean> {
+async function isAdmin(supabase: SupabaseClient): Promise<boolean> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -21,6 +22,7 @@ async function isAdmin(supabase: any): Promise<boolean> {
   if (!user) return false;
 
   // Check user email against admin list (env var)
+  if (!user.email) return false;
   const adminEmails = process.env.ADMIN_EMAILS?.split(',') || [];
   return adminEmails.includes(user.email);
 }

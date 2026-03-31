@@ -13,6 +13,13 @@ import { createClient } from '@/lib/supabase/server';
  * - Platform breakdown
  * - Downloads over time (last 30 days)
  */
+
+type EpisodeDownload = {
+  ip_hash: string;
+  platform: string | null;
+  downloaded_at: string | null;
+};
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -68,7 +75,7 @@ export async function GET(
 
     // Get all downloads for this episode
     // Note: If episode_downloads table doesn't exist or has no data, return empty analytics
-    let downloads: any[] | null = null;
+    let downloads: EpisodeDownload[] | null = null;
     try {
       const result = await supabase
         .from('episode_downloads')
