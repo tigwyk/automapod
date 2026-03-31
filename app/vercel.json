@@ -1,0 +1,6 @@
+{
+  "buildCommand": "rm -rf .next && bun run build",
+  "installCommand": "bun install --frozen-lockfile",
+  "framework": "nextjs",
+  "devCommand": "bun run dev"
+}
