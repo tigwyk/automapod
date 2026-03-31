@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 type PlatformData = {
   ios: number;
@@ -29,10 +30,19 @@ type AnalyticsError = {
 
 async function getAnalytics(episodeId: string): Promise<AnalyticsData | AnalyticsError | null> {
   try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join('; ');
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/analytics/episode/${episodeId}`,
       {
         cache: 'no-store',
+        headers: {
+          Cookie: cookieHeader,
+        },
       }
     );
 

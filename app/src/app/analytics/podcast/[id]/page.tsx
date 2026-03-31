@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { AppNav } from '@/components/app-nav';
+import { cookies } from 'next/headers';
 
 type PlatformBreakdown = {
   ios: number;
@@ -32,19 +33,40 @@ type PodcastAnalytics = {
   topEpisodes: TopEpisode[];
 };
 
+type PodcastAnalyticsError = {
+  error: string;
+  status: number;
+};
+
 async function getPodcastAnalytics(
   podcastId: string,
   siteUrl: string
-): Promise<PodcastAnalytics | null> {
+): Promise<PodcastAnalytics | PodcastAnalyticsError | null> {
   try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join('; ');
+
     const response = await fetch(
       `${siteUrl}/api/analytics/podcast/${podcastId}`,
-      { cache: 'no-store' }
+      {
+        cache: 'no-store',
+        headers: {
+          Cookie: cookieHeader,
+        },
+      }
     );
-    if (!response.ok) return null;
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      return { error: error.error || 'Failed to fetch analytics', status: response.status };
+    }
+
     return await response.json();
-  } catch {
-    return null;
+  } catch (error) {
+    return { error: 'Network error', status: 0 };
   }
 }
 
@@ -69,6 +91,32 @@ export default async function PodcastAnalyticsPage({
 
   if (!analytics) {
     notFound();
+  }
+
+  // Check if this is an error response
+  if ('error' in analytics) {
+    const errorInfo = getErrorMessage(analytics);
+    return (
+      <div className="min-h-screen bg-muted/30">
+        <AppNav userId={user.id} userEmail={user.email} activeLink="analytics" />
+
+        <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          <div className="card-elevated p-8">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">{errorInfo.title}</h1>
+            <p className="text-foreground mb-2">{errorInfo.message}</p>
+            {errorInfo.action && <p className="text-muted-foreground">{errorInfo.action}</p>}
+            <div className="mt-6">
+              <a
+                href="/analytics"
+                className="text-primary hover:text-primary/80 font-medium"
+              >
+                ← Back to Analytics
+              </a>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   const maxPlatformCount = Math.max(
@@ -246,4 +294,39 @@ export default async function PodcastAnalyticsPage({
       </main>
     </div>
   );
+}
+
+function getErrorMessage(error: PodcastAnalyticsError): { title: string; message: string; action?: string } {
+  switch (error.status) {
+    case 401:
+      return {
+        title: 'Authentication Required',
+        message: 'You need to be logged in to view podcast analytics.',
+        action: 'Please log in and try again.',
+      };
+    case 403:
+      return {
+        title: 'Access Denied',
+        message: 'You do not have permission to view analytics for this podcast.',
+        action: 'You can only view analytics for your own podcasts.',
+      };
+    case 404:
+      return {
+        title: 'Podcast Not Found',
+        message: 'This podcast does not exist or has been deleted.',
+        action: 'Check the podcast ID and try again.',
+      };
+    case 500:
+      return {
+        title: 'Server Error',
+        message: 'There was a problem fetching the analytics data.',
+        action: 'Please try again later.',
+      };
+    default:
+      return {
+        title: 'Error',
+        message: error.error || 'An unexpected error occurred.',
+        action: 'Please try again.',
+      };
+  }
 }
