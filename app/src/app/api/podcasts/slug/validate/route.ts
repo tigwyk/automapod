@@ -3,17 +3,13 @@ import { createClient } from '@/lib/supabase/server';
 
 export const runtime = 'edge';
 
+const MAX_SLUG_CANDIDATES = 11; // 1 random + 10 numeric suffixes
+
 interface ValidateSlugResponse {
   isUnique: boolean;
   suggestedSlug?: string;
 }
 
-/**
- * Validates if an RSS slug is unique and optionally suggests a unique variant.
- * Query params:
- *   - slug: The slug to validate (required)
- *   - suggestUnique: If "true", returns a unique slug suggestion if the provided slug is taken (optional)
- */
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
@@ -30,7 +26,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
   }
 
-  // Validate slug format
   if (!/^[a-z0-9-]+$/.test(slug)) {
     return NextResponse.json(
       { error: 'Slug can only contain lowercase letters, numbers, and hyphens' },
@@ -38,42 +33,33 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Check if slug exists
   const { data: existing } = await supabase
     .from('podcasts')
-    .select('id, rss_slug')
+    .select('rss_slug')
     .eq('rss_slug', slug)
     .maybeSingle();
 
   const isUnique = !existing;
 
-  // If slug is unique or suggestion not requested, return early
   if (isUnique || !suggestUnique) {
     return NextResponse.json<ValidateSlugResponse>({ isUnique });
   }
 
-  // Generate a unique slug by adding a random suffix
-  let suggestedSlug = slug;
-  let suffix = 1;
-  const maxAttempts = 100;
+  // Generate candidates and check all in a single query
+  const candidates = [
+    `${slug}-${Math.random().toString(36).substring(2, 8)}`,
+    ...Array.from({ length: 10 }, (_, i) => `${slug}-${i + 1}`)
+  ];
 
-  while (suffix <= maxAttempts) {
-    suggestedSlug = suffix === 1 ? `${slug}-${Math.random().toString(36).substring(2, 8)}` : `${slug}-${suffix}`;
+  const { data: taken } = await supabase
+    .from('podcasts')
+    .select('rss_slug')
+    .in('rss_slug', candidates);
 
-    const { data: existingSuggestion } = await supabase
-      .from('podcasts')
-      .select('id')
-      .eq('rss_slug', suggestedSlug)
-      .maybeSingle();
+  const takenSlugs = new Set(taken?.map(p => p.rss_slug) || []);
+  const suggestedSlug = candidates.find(c => !takenSlugs.has(c));
 
-    if (!existingSuggestion) {
-      break;
-    }
-
-    suffix++;
-  }
-
-  if (suffix > maxAttempts) {
+  if (!suggestedSlug) {
     return NextResponse.json(
       { error: 'Could not generate a unique slug. Please try a different base slug.' },
       { status: 500 }
