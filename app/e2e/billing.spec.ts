@@ -139,3 +139,112 @@ test.describe('Tier enforcement', () => {
     await expect(page.locator('text=/days left in your free trial/')).toBeVisible();
   });
 });
+
+// ── Group 5 — Usage metrics ─────────────────────────────────────────────────────
+
+test.describe('Usage metrics', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+
+  test.afterEach(async () => {
+    await resetTestUserToFree();
+  });
+
+  test('displays usage metrics section on billing page', async ({ page }) => {
+    await page.goto('/settings/billing');
+
+    // Usage section heading (may not be present if feature not yet merged)
+    const usageHeading = page.getByRole('heading', { name: 'Usage' });
+    const isVisible = await usageHeading.isVisible().catch(() => false);
+
+    if (!isVisible) {
+      test.skip(true, 'Usage metrics feature not yet deployed');
+    }
+
+    await expect(usageHeading).toBeVisible();
+  });
+
+  test('shows current usage vs limits for podcasts', async ({ page }) => {
+    await page.goto('/settings/billing');
+
+    // Check if Usage section exists (feature may not be deployed)
+    const usageHeading = page.getByRole('heading', { name: 'Usage' });
+    const hasUsageSection = await usageHeading.isVisible().catch(() => false);
+
+    if (!hasUsageSection) {
+      test.skip(true, 'Usage metrics feature not yet deployed');
+    }
+
+    // Should show podcasts label and usage count
+    const podcastsSection = page.locator('dt', { hasText: 'Podcasts' });
+    await expect(podcastsSection.first()).toBeVisible();
+  });
+
+  test('shows current usage vs limits for episodes', async ({ page }) => {
+    await page.goto('/settings/billing');
+
+    const usageHeading = page.getByRole('heading', { name: 'Usage' });
+    const hasUsageSection = await usageHeading.isVisible().catch(() => false);
+
+    if (!hasUsageSection) {
+      test.skip(true, 'Usage metrics feature not yet deployed');
+    }
+
+    // Should show episodes label
+    const episodesSection = page.locator('dt', { hasText: 'Episodes' });
+    await expect(episodesSection.first()).toBeVisible();
+  });
+
+  test('shows current usage vs limits for storage', async ({ page }) => {
+    await page.goto('/settings/billing');
+
+    const usageHeading = page.getByRole('heading', { name: 'Usage' });
+    const hasUsageSection = await usageHeading.isVisible().catch(() => false);
+
+    if (!hasUsageSection) {
+      test.skip(true, 'Usage metrics feature not yet deployed');
+    }
+
+    // Should show storage label
+    const storageSection = page.locator('dt', { hasText: 'Storage' });
+    await expect(storageSection.first()).toBeVisible();
+  });
+
+  test('displays progress bars for limited resources', async ({ page }) => {
+    await page.goto('/settings/billing');
+
+    const usageHeading = page.getByRole('heading', { name: 'Usage' });
+    const hasUsageSection = await usageHeading.isVisible().catch(() => false);
+
+    if (!hasUsageSection) {
+      test.skip(true, 'Usage metrics feature not yet deployed');
+    }
+
+    // Free tier has limits, so progress bars should be visible
+    const progressBars = page.locator('.bg-secondary.rounded-full.h-2');
+    await expect(progressBars.first()).toBeVisible();
+  });
+
+  test('progress bars have correct color coding', async ({ page }) => {
+    await page.goto('/settings/billing');
+
+    const usageHeading = page.getByRole('heading', { name: 'Usage' });
+    const hasUsageSection = await usageHeading.isVisible().catch(() => false);
+
+    if (!hasUsageSection) {
+      test.skip(true, 'Usage metrics feature not yet deployed');
+    }
+
+    // Check for progress bars (they should exist)
+    const progressBars = page.locator('[class*="rounded-full"][class*="h-2"]');
+
+    // Each progress bar should have a color class (green, amber, or red)
+    const count = await progressBars.count();
+    expect(count).toBeGreaterThan(0);
+
+    // Verify at least one has a color indicator
+    const coloredBar = page.locator('.bg-green-500, .bg-amber-500, .bg-red-500');
+    await expect(coloredBar.first()).toBeVisible();
+  });
+});

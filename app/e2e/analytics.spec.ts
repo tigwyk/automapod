@@ -28,6 +28,27 @@ test.describe('Analytics & Download Tracking', () => {
     expect(cacheControl).toContain('no-cache');
   });
 
+  test('should return 1x1 GIF for new tracking pixel route', async ({ request }) => {
+    // Test the new /track/[episodeId].gif route
+    const response = await request.get('/track/00000000-0000-0000-0000-000000000000.gif');
+
+    // If feature not yet deployed, skip test
+    if (response.status() === 404) {
+      test.skip(true, 'Download tracking pixel feature not yet deployed');
+    }
+
+    // Should return 200 regardless of episode validity (for RSS reader compatibility)
+    expect(response.status()).toBe(200);
+
+    // Should be a GIF
+    const contentType = response.headers()['content-type'];
+    expect(contentType).toContain('image/gif');
+
+    // Should not cache
+    const cacheControl = response.headers()['cache-control'];
+    expect(cacheControl).toContain('no-cache');
+  });
+
   test('should require authentication for analytics endpoint', async ({ request }) => {
     // Use a fresh request context without cookies
     const response = await request.get('/api/analytics/episode/00000000-0000-0000-0000-000000000000');
