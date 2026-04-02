@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Queue } from 'bullmq'
 
-import type { InjectAdsRequest, InjectAdsResponse, EpisodeWithPodcast } from '@/lib/types'
+import type { InjectAdsRequest, EpisodeWithPodcast } from '@/lib/types'
 
 // Initialize BullMQ queue for ad injection
 const getAdInjectionQueue = () => {
