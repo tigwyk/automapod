@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { getAllMetricSummaries, getActiveAlerts, type MetricType } from '@/lib/monitoring';
-import type { InfrastructureAlert } from '@/lib/alerts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**

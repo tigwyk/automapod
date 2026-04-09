@@ -5,7 +5,8 @@ import type { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const state = searchParams.get('state');
+  // State is fetched for OAuth CSRF protection but not used in this handler
+  const _state = searchParams.get('state');
   const type = searchParams.get('type');
 
   // If there's an error in the OAuth flow, redirect to login with error

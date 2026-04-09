@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {

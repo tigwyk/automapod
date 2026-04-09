@@ -6,7 +6,6 @@ import type {
   PlacementResponse,
   AdPlacement,
   AdPlacementInsert,
-  AdPlacementUpdate,
   EpisodeWithPodcast,
   AdPlacementWithDetails,
   AdCreativeWithCampaignForOwnership,
