@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createPublicClient } from '@/lib/supabase/public';
 import { createHash } from 'crypto';
 
 // 1x1 transparent GIF (43 bytes) - for pixel tracking mode
@@ -48,11 +48,8 @@ export async function GET(request: NextRequest) {
     return returnPixelGif();
   }
 
-  // Lazy-load Supabase client (environment variables not available at build time)
-  const supabase = createClient(
-    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Use the same public client as the RSS route (ensures RLS policy is matched)
+  const supabase = createPublicClient();
 
   // Fetch episode to get the actual audio URL
   const { data: episode, error: episodeError } = await supabase
@@ -62,7 +59,14 @@ export async function GET(request: NextRequest) {
     .single();
 
   if (episodeError || !episode || !episode.audio_url) {
-    // Episode not found - always return GIF silently (for RSS reader compatibility)
+    // Log the actual error for debugging (but still return GIF so RSS readers don't break)
+    if (episodeError) {
+      console.error('Download tracking: failed to fetch episode', episodeId, episodeError);
+    } else if (!episode) {
+      console.error('Download tracking: episode not found', episodeId);
+    } else {
+      console.error('Download tracking: episode has no audio_url', episodeId);
+    }
     return returnPixelGif();
   }
 
