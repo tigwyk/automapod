@@ -73,9 +73,11 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
         throw new Error(json.error ?? 'Failed to prepare upload');
       }
 
-      const { presignedUrl, audioUrl } = await presignRes.json() as {
+      const { presignedUrl, audioUrl, contentType, fileSize } = await presignRes.json() as {
         presignedUrl: string;
         audioUrl: string;
+        contentType: string;
+        fileSize: number;
       };
 
       // ── Phase 2: upload file directly to R2 ───────────────────────────
@@ -113,7 +115,7 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
       const createRes = await fetch('/api/episodes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, audioUrl, podcastId }),
+        body: JSON.stringify({ title, description, audioUrl, podcastId, contentType, fileSize }),
       });
 
       if (!createRes.ok) {

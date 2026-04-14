@@ -191,6 +191,8 @@ export interface Episode {
   description: string | null
   audio_url: string
   ad_enhanced_audio_url: string | null // URL with ads injected
+  audio_file_size: number | null // File size in bytes for RSS enclosure
+  audio_content_type: string | null // MIME type for RSS enclosure
   duration_seconds: number | null
   transcript: string | null
   transcript_status: 'pending' | 'processing' | 'completed' | 'failed' | null

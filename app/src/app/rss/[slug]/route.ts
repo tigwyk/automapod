@@ -78,6 +78,8 @@ interface EpisodeRecord {
   description: string | null;
   audio_url: string | null;
   ad_enhanced_audio_url: string | null;
+  audio_file_size: number | null;
+  audio_content_type: string | null;
   created_at: string;
   duration_seconds: number | null;
 }
@@ -115,7 +117,7 @@ function generateRSSFeed(podcast: PodcastRecord, episodes: EpisodeRecord[], requ
       `${baseUrl}/api/track/download?episodeId=${episode.id}` : null;
 
     const enclosure = trackedAudioUrl ?
-      `    <enclosure url="${trackedAudioUrl}" type="audio/mpeg" length="12345678"/>` : '';
+      `    <enclosure url="${trackedAudioUrl}" type="${episode.audio_content_type || 'audio/mpeg'}" length="${episode.audio_file_size || 0}"/>` : '';
 
     return `    <item>
       <title><![CDATA[${episode.title}]]></title>

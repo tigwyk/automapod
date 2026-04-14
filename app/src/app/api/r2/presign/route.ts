@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     const presignedUrl = await getPresignedUploadUrl(key, contentType);
     const audioUrl = `${getR2EpisodesCustomDomain()}/${key}`;
 
-    return NextResponse.json({ presignedUrl, key, audioUrl });
+    return NextResponse.json({ presignedUrl, key, audioUrl, contentType, fileSize });
   } catch (error) {
     console.error('Presign error:', error);
     return NextResponse.json({ error: 'Failed to generate upload URL' }, { status: 500 });

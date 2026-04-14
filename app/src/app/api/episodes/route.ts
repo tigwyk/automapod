@@ -25,9 +25,11 @@ export async function POST(request: NextRequest) {
       description?: string;
       audioUrl?: string;
       podcastId?: string;
+      contentType?: string;
+      fileSize?: number;
     };
 
-    const { title, description, audioUrl, podcastId } = body;
+    const { title, description, audioUrl, podcastId, contentType, fileSize } = body;
 
     if (!title?.trim()) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -60,6 +62,8 @@ export async function POST(request: NextRequest) {
         title: title.trim(),
         description: description?.trim() || '',
         audio_url: audioUrl,
+        audio_file_size: fileSize ?? null,
+        audio_content_type: contentType ?? null,
         duration_seconds: null,
         transcript_status: 'pending',
         podcast_id: podcastId,
