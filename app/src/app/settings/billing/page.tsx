@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { AppNav } from '@/components/app-nav';
 import { getUserSubscription } from '@/lib/get-user-subscription';
+import { getUserUsage } from '@/lib/get-user-usage';
 import { TIER_LABELS, TIER_LIMITS, TIER_PRICES, getEffectiveTier } from '@/lib/subscription';
 import { OpenPortalButton } from '@/components/open-portal-button';
 import { StartTrialButton } from '@/components/start-trial-button';
@@ -21,6 +22,7 @@ export default async function BillingPage({
   if (!user) redirect('/login');
 
   const subscription = await getUserSubscription(user.id);
+  const usage = await getUserUsage(user.id);
   const effectiveTier = getEffectiveTier(subscription);
   const limits = TIER_LIMITS[effectiveTier];
   const params = await searchParams;
@@ -32,6 +34,11 @@ export default async function BillingPage({
     : null;
 
   const isPaid = effectiveTier !== 'free';
+
+  // Calculate usage percentages for progress bars
+  const podcastUsage = limits.podcasts === Infinity ? 0 : (usage.podcastCount / limits.podcasts) * 100;
+  const episodeUsage = limits.episodes === Infinity ? 0 : (usage.episodeCount / limits.episodes) * 100;
+  const storageUsage = (usage.storageUsedMb / limits.storageMb) * 100;
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -98,39 +105,105 @@ export default async function BillingPage({
 
         {/* Usage */}
         <div className="card-elevated p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Plan limits</h2>
-          <dl className="grid grid-cols-2 gap-4 text-sm">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Usage</h2>
+          <div className="space-y-4">
+            {/* Podcasts */}
             <div>
-              <dt className="text-muted-foreground">Podcasts</dt>
-              <dd className="font-medium text-foreground mt-0.5">
-                {limits.podcasts === Infinity ? 'Unlimited' : `Up to ${limits.podcasts}`}
-              </dd>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-muted-foreground">Podcasts</span>
+                <span className="font-medium text-foreground">
+                  {limits.podcasts === Infinity
+                    ? `${usage.podcastCount} podcasts`
+                    : `${usage.podcastCount} / ${limits.podcasts}`}
+                </span>
+              </div>
+              {limits.podcasts !== Infinity && (
+                <div className="w-full bg-secondary rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full ${
+                      podcastUsage >= 90 ? 'bg-red-500' : podcastUsage >= 70 ? 'bg-amber-500' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(podcastUsage, 100)}%` }}
+                  />
+                </div>
+              )}
+              {podcastUsage >= 90 && limits.podcasts !== Infinity && (
+                <p className="text-xs text-amber-600 mt-1">⚠️ Approaching podcast limit</p>
+              )}
             </div>
+
+            {/* Episodes */}
             <div>
-              <dt className="text-muted-foreground">Episodes</dt>
-              <dd className="font-medium text-foreground mt-0.5">
-                {limits.episodes === Infinity ? 'Unlimited' : `Up to ${limits.episodes}`}
-              </dd>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-muted-foreground">Episodes</span>
+                <span className="font-medium text-foreground">
+                  {limits.episodes === Infinity
+                    ? `${usage.episodeCount} episodes`
+                    : `${usage.episodeCount} / ${limits.episodes}`}
+                </span>
+              </div>
+              {limits.episodes !== Infinity && (
+                <div className="w-full bg-secondary rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full ${
+                      episodeUsage >= 90 ? 'bg-red-500' : episodeUsage >= 70 ? 'bg-amber-500' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(episodeUsage, 100)}%` }}
+                  />
+                </div>
+              )}
+              {episodeUsage >= 90 && limits.episodes !== Infinity && (
+                <p className="text-xs text-amber-600 mt-1">⚠️ Approaching episode limit</p>
+              )}
             </div>
+
+            {/* Storage */}
             <div>
-              <dt className="text-muted-foreground">Storage</dt>
-              <dd className="font-medium text-foreground mt-0.5">
-                {limits.storageMb >= 1024 ? `${(limits.storageMb / 1024).toFixed(0)} GB` : `${limits.storageMb} MB`}
-              </dd>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-muted-foreground">Storage</span>
+                <span className="font-medium text-foreground">
+                  {usage.storageUsedMb >= 1024
+                    ? `${(usage.storageUsedMb / 1024).toFixed(2)} GB`
+                    : `${usage.storageUsedMb.toFixed(0)} MB`}
+                  {' / '}
+                  {limits.storageMb >= 1024
+                    ? `${(limits.storageMb / 1024).toFixed(0)} GB`
+                    : `${limits.storageMb} MB`}
+                </span>
+              </div>
+              <div className="w-full bg-secondary rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full ${
+                    storageUsage >= 90 ? 'bg-red-500' : storageUsage >= 70 ? 'bg-amber-500' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min(storageUsage, 100)}%` }}
+                />
+              </div>
+              {storageUsage >= 90 && (
+                <p className="text-xs text-amber-600 mt-1">⚠️ Approaching storage limit</p>
+              )}
             </div>
-            <div>
-              <dt className="text-muted-foreground">Transcription</dt>
-              <dd className="font-medium text-foreground mt-0.5">
-                {limits.transcriptionHours === 0 ? 'Not included' : `${limits.transcriptionHours} hrs/mo`}
-              </dd>
+
+            {/* Transcription */}
+            <div className="pt-2 border-t border-border">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Transcription</span>
+                <span className="font-medium text-foreground">
+                  {limits.transcriptionHours === 0 ? 'Not included' : `${limits.transcriptionHours} hrs/mo`}
+                </span>
+              </div>
             </div>
-            <div>
-              <dt className="text-muted-foreground">Analytics</dt>
-              <dd className="font-medium text-foreground mt-0.5">
-                {limits.analyticsWindowDays === Infinity ? 'Full history' : `Last ${limits.analyticsWindowDays} days`}
-              </dd>
+
+            {/* Analytics */}
+            <div className="pt-2 border-t border-border">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Analytics</span>
+                <span className="font-medium text-foreground">
+                  {limits.analyticsWindowDays === Infinity ? 'Full history' : `Last ${limits.analyticsWindowDays} days`}
+                </span>
+              </div>
             </div>
-          </dl>
+          </div>
         </div>
       </main>
     </div>
