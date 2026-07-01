@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const supabase = await createClient();
 
@@ -107,7 +107,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ episodes });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

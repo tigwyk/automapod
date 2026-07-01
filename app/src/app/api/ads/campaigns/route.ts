@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import type {
   CreateCampaignRequest,
   CampaignResponse,
-  AdCampaign,
   AdCampaignInsert,
   AdCampaignWithCounts,
 } from '@/lib/types'
@@ -13,7 +12,7 @@ import type {
  * GET /api/ads/campaigns
  * List all campaigns for the authenticated user
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient()
 
