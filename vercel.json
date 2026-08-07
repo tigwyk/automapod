@@ -3,7 +3,6 @@
   "outputDirectory": ".next",
   "installCommand": "bun install --frozen-lockfile",
   "framework": "nextjs",
-
   "headers": [
     {
       "source": "/rss/:slug*",
@@ -36,18 +35,10 @@
       ]
     }
   ],
-
   "rewrites": [
     {
       "source": "/d/:path*",
       "destination": "/api/track/:path*"
-    }
-  ],
-
-  "crons": [
-    {
-      "path": "/api/cron/monitoring",
-      "schedule": "*/5 * * * *"
     }
   ]
 }

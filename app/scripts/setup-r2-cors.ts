@@ -8,12 +8,10 @@
  *   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_EPISODES_BUCKET
  */
 
-import { config } from 'dotenv';
-import { resolve } from 'path';
+
 import { S3Client, PutBucketCorsCommand, GetBucketCorsCommand } from '@aws-sdk/client-s3';
 
-// Load .env.local from the app root
-config({ path: resolve(process.cwd(), '.env.local') });
+// bun run auto-loads .env.local from the app root
 
 function getRequiredEnv(name: string): string {
   const value = process.env[name]?.trim();
