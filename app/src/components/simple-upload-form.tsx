@@ -7,12 +7,13 @@ import { UpgradePrompt } from '@/components/upgrade-prompt';
 type UploadPhase = 'idle' | 'presigning' | 'uploading' | 'saving' | 'error';
 
 interface SimpleUploadFormProps {
-  podcastTitle: string;
-  podcastId: string;
+  podcastTitle?: string;
+  podcastId?: string;
+  podcasts?: { id: string; title: string }[];
   backUrl: string;
 }
 
-export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUploadFormProps) {
+export function SimpleUploadForm({ podcastTitle, podcastId, podcasts, backUrl }: SimpleUploadFormProps) {
   const router = useRouter();
   const [phase, setPhase] = useState<UploadPhase>('idle');
   const [progress, setProgress] = useState(0);
@@ -38,6 +39,9 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
     const description = (form.elements.namedItem('description') as HTMLTextAreaElement).value.trim();
     const fileInput = form.elements.namedItem('audio') as HTMLInputElement;
     const file = fileInput.files?.[0];
+    const selectedPodcastId = podcastId ??
+      ((form.elements.namedItem('podcast_id') as HTMLSelectElement | null)?.value ||
+      undefined);
 
     if (!title) {
       setError('Title is required');
@@ -59,7 +63,7 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
           filename: file.name,
           contentType: file.type || 'audio/mpeg',
           fileSize: file.size,
-          podcastId,
+          podcastId: selectedPodcastId,
         }),
       });
 
@@ -115,7 +119,7 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
       const createRes = await fetch('/api/episodes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, audioUrl, podcastId, contentType, fileSize }),
+        body: JSON.stringify({ title, description, audioUrl, podcastId: selectedPodcastId, contentType, fileSize }),
       });
 
       if (!createRes.ok) {
@@ -145,7 +149,9 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Upload New Episode</h1>
         <p className="text-gray-600 mt-1">
-          Add a new episode to <span className="font-semibold">{podcastTitle}</span>
+          {podcastTitle
+            ? <>Add a new episode to <span className="font-semibold">{podcastTitle}</span></>
+            : 'Add a new episode to your feed'}
         </p>
       </div>
 
@@ -199,6 +205,25 @@ export function SimpleUploadForm({ podcastTitle, podcastId, backUrl }: SimpleUpl
               placeholder="Episode description"
             />
           </div>
+
+          {podcasts && podcasts.length > 0 && (
+            <div>
+              <label htmlFor="podcast_id" className="block text-sm font-medium text-gray-700">
+                Podcast
+              </label>
+              <select
+                name="podcast_id"
+                id="podcast_id"
+                disabled={isSubmitting}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-50"
+              >
+                <option value="">None (standalone episode)</option>
+                {podcasts.map((p) => (
+                  <option key={p.id} value={p.id}>{p.title}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label htmlFor="audio" className="block text-sm font-medium text-gray-700">

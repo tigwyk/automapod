@@ -16,7 +16,7 @@ import { canUploadEpisode } from '@/lib/subscription';
  * Returns a short-lived presigned PUT URL for direct browser → R2 uploads.
  * The audio file never transits the Next.js server.
  *
- * Body: { filename: string, contentType: string, fileSize: number, podcastId: string }
+ * Body: { filename: string, contentType: string, fileSize: number, podcastId?: string }
  * Returns: { presignedUrl: string, key: string, audioUrl: string }
  */
 export async function POST(request: NextRequest) {
@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
 
     const { filename, contentType, fileSize, podcastId } = body;
 
-    if (!filename || !contentType || fileSize === undefined || !podcastId) {
+    if (!filename || !contentType || fileSize === undefined) {
       return NextResponse.json(
-        { error: 'filename, contentType, fileSize, and podcastId are required' },
+        { error: 'filename, contentType, and fileSize are required' },
         { status: 400 }
       );
     }
@@ -59,19 +59,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify the authenticated user owns this podcast
-    const { data: podcast } = await supabase
-      .from('podcasts')
-      .select('id')
-      .eq('id', podcastId)
-      .eq('user_id', user.id)
-      .single();
+    // Verify the authenticated user owns this podcast (when one is given)
+    if (podcastId) {
+      const { data: podcast } = await supabase
+        .from('podcasts')
+        .select('id')
+        .eq('id', podcastId)
+        .eq('user_id', user.id)
+        .single();
 
-    if (!podcast) {
-      return NextResponse.json(
-        { error: 'Podcast not found or access denied' },
-        { status: 403 }
-      );
+      if (!podcast) {
+        return NextResponse.json(
+          { error: 'Podcast not found or access denied' },
+          { status: 403 }
+        );
+      }
     }
 
     // Subscription tier enforcement
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
     const { count: episodeCount, error: countError } = await supabase
       .from('episodes')
       .select('id', { count: 'exact', head: true })
-      .eq('podcast_id', podcastId);
+      .eq(podcastId ? 'podcast_id' : 'user_id', podcastId ?? user.id);
 
     if (countError) {
       return NextResponse.json({ error: 'Failed to check episode limit' }, { status: 500 });

@@ -13,22 +13,18 @@
     "test:prod": "playwright test --config=playwright.prod.config.ts",
     "test:prod:ui": "playwright test --config=playwright.prod.config.ts --ui",
     "setup:cors": "bun run scripts/setup-r2-cors.ts",
-    "dev:inngest": "bunx inngest-cli@latest dev",
-    "dev:inngest2": "npx inngest-cli@latest dev"
+    "dev:inngest": "bunx inngest-cli@latest dev"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1009.0",
     "@aws-sdk/s3-request-presigner": "^3.1017.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.4",
-    "bullmq": "^5.71.1",
-    "dotenv": "^17.3.1",
     "groq-sdk": "^0.9.0",
     "inngest": "^4.1.0",
     "next": "15.5.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "resend": "^6.10.0",
     "stripe": "^21.0.0"
   },
   "devDependencies": {
@@ -42,6 +38,7 @@
     "eslint-config-next": "15.5.6",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "dotenv": "^17.3.1"
   }
 }
